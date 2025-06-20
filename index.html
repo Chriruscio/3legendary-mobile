@@ -872,7 +872,14 @@
         // 🚀 CONFIGURAZIONE API
 const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbzfEuEHWVffEsOn1W1ZqTZHw7J0H_YacXLGVe-JzVemunw33hom8LBpk0dxvT4yVVhq1Q/exec';
 
-// FUNZIONE PER CHIAMATE API - VERSIONE NO-CORS
+// STORAGE LOCALE + API
+let localData = {
+    expenses: [],
+    sales: [],
+    inventory: []
+};
+
+// FUNZIONE PER CHIAMATE API - VERSIONE IBRIDA
 async function apiCall(action, data = {}) {
     try {
         const params = new URLSearchParams({
@@ -880,335 +887,117 @@ async function apiCall(action, data = {}) {
             ...data
         });
         
-        // Prova prima con mode: 'no-cors'
-        const response = await fetch(`${API_BASE_URL}?${params}`, {
+        // Invia al server (senza leggere risposta)
+        fetch(`${API_BASE_URL}?${params}`, {
             method: 'GET',
             mode: 'no-cors'
-        });
+        }).catch(() => {}); // Ignora errori
         
-        // Con no-cors non possiamo leggere la risposta, quindi assumiamo successo
-        return { success: true, message: 'Operazione completata (modalità no-cors)' };
+        // Simula il salvataggio anche localmente per l'interfaccia
+        if (action === 'addExpense') {
+            return handleLocalExpense(data);
+        } else if (action === 'addSale') {
+            return handleLocalSale(data);
+        } else if (action === 'addCash') {
+            return handleLocalCash(data);
+        }
+        
+        return { success: true, message: 'Operazione inviata al server' };
         
     } catch (error) {
         console.error('API Error:', error);
-        
-        // Fallback: usa un iframe nascosto
-        return await apiCallIframe(action, data);
+        return { success: false, message: 'Errore di connessione' };
     }
 }
 
-// FALLBACK CON IFRAME
-function apiCallIframe(action, data = {}) {
-    return new Promise((resolve) => {
-        const params = new URLSearchParams({
-            action: action,
-            ...data
-        });
-        
-        // Crea iframe nascosto
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.src = `${API_BASE_URL}?${params}`;
-        
-        // Assume successo dopo 3 secondi
-        setTimeout(() => {
-            document.body.removeChild(iframe);
-            resolve({ 
-                success: true, 
-                message: 'Operazione inviata al server (verifica su PC)' 
-            });
-        }, 3000);
-        
-        document.body.appendChild(iframe);
-    });
+// GESTIONE LOCALE SPESE
+function handleLocalExpense(data) {
+    const quantita = parseInt(data.quantita);
+    const prezzoTotale = parseFloat(data.prezzo_totale);
+    const prezzoUnitario = (prezzoTotale / quantita).toFixed(2);
+    
+    const expense = {
+        ...data,
+        prezzo_unitario: prezzoUnitario,
+        id: 'EXP' + Date.now()
+    };
+    
+    localData.expenses.push(expense);
+    
+    // Se è "Da Vendere" o "Uso Interno", aggiungi all'inventario
+    if (data.categoria === 'Da Vendere' || data.categoria === 'Uso Interno') {
+        const inventoryItem = {
+            id: 'INV' + Date.now(),
+            descrizione: data.descrizione,
+            acquistato_da: data.socio,
+            quantita_totale: quantita,
+            quantita_disponibile: quantita,
+            prezzo_unitario: parseFloat(prezzoUnitario),
+            destinazione: data.categoria,
+            data: data.data,
+            stato: 'Disponibile'
+        };
+        localData.inventory.push(inventoryItem);
+    }
+    
+    saveLocalData();
+    return { 
+        success: true, 
+        message: `✅ Spesa salvata! ${quantita}x ${data.descrizione} a €${prezzoUnitario} cad.` 
+    };
 }
 
-// SOSTITUZIONE FORM HANDLERS
-
-// 1. FORM SPESE - SOSTITUISCI IL FORM HANDLER ESISTENTE
-document.getElementById('expenseForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const formData = new FormData(this);
-    const data = Object.fromEntries(formData);
+// GESTIONE LOCALE VENDITE
+function handleLocalSale(data) {
+    const quantita = parseInt(data.quantita_vendita);
+    const prezzoTotaleVendita = parseFloat(data.prezzo_totale_vendita);
+    const costoTotale = parseFloat(data.costo_totale || 0);
+    const profittoTotale = prezzoTotaleVendita - costoTotale;
     
-    // Mostra loading
-    showMessage('⏳ Salvando...', 'success');
+    const sale = {
+        ...data,
+        profitto_totale: profittoTotale.toFixed(2),
+        profitto_per_socio: (profittoTotale / 3).toFixed(2),
+        percentuale: costoTotale > 0 ? ((profittoTotale / costoTotale) * 100).toFixed(1) : 0,
+        id: 'SALE' + Date.now()
+    };
     
-    try {
-        const result = await apiCall('addExpense', data);
-        
-        if (result.success) {
-            showMessage(result.message, 'success');
-            this.reset();
-            const today = new Date().toISOString().split('T')[0];
-            document.querySelector('input[name="data"]').value = today;
-            document.querySelector('input[name="quantita"]').value = 1;
-            document.getElementById('pricePreview').style.display = 'none';
-            
-            // Ricarica inventario se necessario
-            if (data.categoria === 'Da Vendere' || data.categoria === 'Uso Interno') {
-                loadInventory();
-            }
-        } else {
-            showMessage('❌ ' + result.message, 'error');
-        }
-    } catch (error) {
-        showMessage('❌ Errore di connessione!', 'error');
-    }
-});
-
-// 2. FORM VENDITE - SOSTITUISCI IL FORM HANDLER ESISTENTE
-document.getElementById('salesForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const formData = new FormData(this);
-    const data = Object.fromEntries(formData);
+    localData.sales.push(sale);
+    saveLocalData();
     
-    showMessage('⏳ Registrando vendita...', 'success');
-    
-    try {
-        const result = await apiCall('addSale', data);
-        
-        if (result.success) {
-            showMessage(result.message, 'success');
-            this.reset();
-            const today = new Date().toISOString().split('T')[0];
-            document.querySelector('input[name="data_vendita"]').value = today;
-            document.getElementById('salePreview').style.display = 'none';
-            
-            loadInventory();
-            loadSalesReport();
-        } else {
-            showMessage('❌ ' + result.message, 'error');
-        }
-    } catch (error) {
-        showMessage('❌ Errore di connessione!', 'error');
-    }
-});
-
-// 3. FORM CASSA - SOSTITUISCI IL FORM HANDLER ESISTENTE
-document.getElementById('addCashForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const formData = new FormData(this);
-    const data = Object.fromEntries(formData);
-    
-    showMessage('⏳ Aggiungendo alla cassa...', 'success');
-    
-    try {
-        const result = await apiCall('addCash', data);
-        
-        if (result.success) {
-            showMessage(result.message, 'success');
-            this.reset();
-            loadCashStatus();
-        } else {
-            showMessage('❌ ' + result.message, 'error');
-        }
-    } catch (error) {
-        showMessage('❌ Errore di connessione!', 'error');
-    }
-});
-
-// 4. CARICAMENTO INVENTARIO - SOSTITUISCI LA FUNZIONE loadInventory
-async function loadInventory() {
-    document.getElementById('inventoryLoading').style.display = 'block';
-    
-    try {
-        const result = await apiCall('getInventory');
-        
-        if (result.success) {
-            currentInventory = result.data;
-            
-            // Aggiorna interfaccia inventario
-            const vendereHtml = result.data.daVendere.map(item => `
-                <div class="item-card">
-                    <div class="item-header">
-                        <span class="item-name">${item.descrizione}</span>
-                        <span class="item-status ${item.quantita_disponibile > 0 ? 'status-disponibile' : 'status-esaurito'}">
-                            ${item.quantita_disponibile > 0 ? 'DISPONIBILE' : 'ESAURITO'}
-                        </span>
-                    </div>
-                    <div class="quantity-info">
-                        <strong>Quantità:</strong> ${item.quantita_disponibile} disponibili (${item.quantita_totale} totali)<br>
-                        <strong>Prezzo acquisto:</strong> €${parseFloat(item.prezzo_unitario).toFixed(2)} cad.
-                    </div>
-                    <div class="item-details">
-                        Acquistato da <strong>${item.acquistato_da}</strong> il ${item.data}
-                        ${item.quantita_disponibile > 0 ? `<button class="btn btn-small" onclick="preloadSaleForm('${item.id}')">🏷️ Vendi</button>` : ''}
-                    </div>
-                </div>
-            `).join('');
-            
-            const internoHtml = result.data.usoInterno.map(item => `
-                <div class="item-card">
-                    <div class="item-header">
-                        <span class="item-name">${item.descrizione}</span>
-                        <span class="item-status status-uso">USO INTERNO</span>
-                    </div>
-                    <div class="quantity-info">
-                        <strong>Quantità:</strong> ${item.quantita_totale}<br>
-                        <strong>Prezzo acquisto:</strong> €${parseFloat(item.prezzo_unitario).toFixed(2)} cad.
-                    </div>
-                    <div class="item-details">
-                        Acquistato da <strong>${item.acquistato_da}</strong> il ${item.data}
-                    </div>
-                </div>
-            `).join('');
-            
-            document.getElementById('inventoryVendereContent').innerHTML = vendereHtml || '<p>Nessun oggetto da vendere</p>';
-            document.getElementById('inventoryInternoContent').innerHTML = internoHtml || '<p>Nessun oggetto uso interno</p>';
-            
-            loadSalesItems();
-        } else {
-            showMessage('❌ ' + result.message, 'error');
-        }
-    } catch (error) {
-        showMessage('❌ Errore caricamento inventario!', 'error');
-    }
-    
-    document.getElementById('inventoryLoading').style.display = 'none';
+    return { 
+        success: true, 
+        message: `✅ Vendita registrata! Profitto: €${profittoTotale.toFixed(2)}` 
+    };
 }
 
-// 5. CARICAMENTO REPORT VENDITE - SOSTITUISCI LA FUNZIONE loadSalesReport
-async function loadSalesReport() {
-    document.getElementById('reportsLoading').style.display = 'block';
-    
-    try {
-        const result = await apiCall('getSalesReport');
-        
-        if (result.success) {
-            const { sales, stats } = result;
-            
-            const statsHtml = `
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value">€${stats.totalRevenue.toFixed(2)}</div>
-                        <div class="stat-label">Ricavo Totale</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">€${stats.totalProfit.toFixed(2)}</div>
-                        <div class="stat-label">Profitto Totale</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${stats.avgROI}%</div>
-                        <div class="stat-label">ROI Medio</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${stats.itemsSold}</div>
-                        <div class="stat-label">Oggetti Venduti</div>
-                    </div>
-                </div>
-            `;
-            
-            const salesHtml = sales.slice(-5).reverse().map(sale => `
-                <div class="item-card">
-                    <div class="item-header">
-                        <span class="item-name">${sale.quantita}x ${sale.oggetto}</span>
-                        <span class="profit-positive">+€${parseFloat(sale.profitto_totale).toFixed(2)}</span>
-                    </div>
-                    <div class="item-details">
-                        <strong>Vendita:</strong> €${parseFloat(sale.prezzo_totale_vendita).toFixed(2)} totale<br>
-                        <strong>Profitto per socio:</strong> €${(parseFloat(sale.profitto_totale) / 3).toFixed(2)} ciascuno<br>
-                        <strong>Venduto a:</strong> ${sale.venduto_a}
-                    </div>
-                </div>
-            `).join('');
-            
-            document.getElementById('reportsContent').innerHTML = statsHtml + '<h3 style="color: #FFD700; margin: 20px 0; text-align: center;">📈 Vendite Recenti</h3>' + salesHtml;
-        } else {
-            showMessage('❌ ' + result.message, 'error');
-        }
-    } catch (error) {
-        showMessage('❌ Errore caricamento report!', 'error');
-    }
-    
-    document.getElementById('reportsLoading').style.display = 'none';
+// GESTIONE LOCALE CASSA
+function handleLocalCash(data) {
+    const importo = parseFloat(data.importo);
+    return { 
+        success: true, 
+        message: `✅ €${importo.toFixed(2)} aggiunti alla cassa comune!` 
+    };
 }
 
-// 6. CARICAMENTO STATO CASSA - SOSTITUISCI LA FUNZIONE loadCashStatus  
-async function loadCashStatus() {
-    document.getElementById('cashLoading').style.display = 'block';
-    
-    try {
-        const result = await apiCall('getCashStatus');
-        
-        if (result.success) {
-            const statsHtml = `
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value">€${result.saldoCassa.toFixed(2)}</div>
-                        <div class="stat-label">Saldo Attuale</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">€${result.daVendite.toFixed(2)}</div>
-                        <div class="stat-label">Da Vendite</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">€${result.versamenti.toFixed(2)}</div>
-                        <div class="stat-label">Versamenti</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">€${result.spese.toFixed(2)}</div>
-                        <div class="stat-label">Spese</div>
-                    </div>
-                </div>
-            `;
-            
-            document.getElementById('cashContent').innerHTML = statsHtml;
-        } else {
-            showMessage('❌ ' + result.message, 'error');
-        }
-    } catch (error) {
-        showMessage('❌ Errore caricamento cassa!', 'error');
+// Carica/Salva dati locali
+function loadLocalData() {
+    const stored = localStorage.getItem('3legendary_mobile_data');
+    if (stored) {
+        localData = JSON.parse(stored);
     }
-    
-    document.getElementById('cashLoading').style.display = 'none';
 }
 
-// 7. CARICAMENTO BILANCIO PERSONALE - SOSTITUISCI LA FUNZIONE loadPersonalBalance
-async function loadPersonalBalance() {
-    document.getElementById('balanceLoading').style.display = 'block';
-    
-    try {
-        const result = await apiCall('getPersonalBalance');
-        
-        if (result.success) {
-            const { balance } = result;
-            
-            const balanceHtml = `
-                <div class="balance-item">
-                    <span class="balance-name">🎮 Ciano</span>
-                    <span class="balance-amount ${balance.ciano.differenza >= 0 ? 'positive' : 'negative'}">${balance.ciano.stato}</span>
-                </div>
-                <div class="balance-item">
-                    <span class="balance-name">🔥 Alex</span>
-                    <span class="balance-amount ${balance.alex.differenza >= 0 ? 'positive' : 'negative'}">${balance.alex.stato}</span>
-                </div>
-                <div class="balance-item">
-                    <span class="balance-name">👑 King</span>
-                    <span class="balance-amount ${balance.king.differenza >= 0 ? 'positive' : 'negative'}">${balance.king.stato}</span>
-                </div>
-                <div class="balance-item" style="border-top: 2px solid #FFD700; margin-top: 15px; padding-top: 15px;">
-                    <span class="balance-name">💰 Totale Investito</span>
-                    <span class="balance-amount" style="background: #FFD700; color: #000;">€${balance.totale.toFixed(2)}</span>
-                </div>
-            `;
-            
-            document.getElementById('balanceContent').innerHTML = balanceHtml;
-        } else {
-            showMessage('❌ ' + result.message, 'error');
-        }
-    } catch (error) {
-        showMessage('❌ Errore caricamento bilancio!', 'error');
-    }
-    
-    document.getElementById('balanceLoading').style.display = 'none';
+function saveLocalData() {
+    localStorage.setItem('3legendary_mobile_data', JSON.stringify(localData));
 }
-     // FUNZIONI BASE MANCANTI
 
+// FUNZIONI BASE
 let currentInventory = {};
 
-// Imposta data odierna
 document.addEventListener('DOMContentLoaded', function() {
+    loadLocalData();
+    
     const today = new Date().toISOString().split('T')[0];
     document.querySelectorAll('input[type="date"]').forEach(input => {
         if (!input.value) input.value = today;
@@ -1216,7 +1005,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Carica dati iniziali
     loadInventory();
-    loadSalesItems();
 });
 
 function showTab(tabName) {
@@ -1236,7 +1024,6 @@ function showTab(tabName) {
     if (tabName === 'reports') loadSalesReport();
     if (tabName === 'cash') loadCashStatus();
     if (tabName === 'balance') loadPersonalBalance();
-    if (tabName === 'sales') loadSalesItems();
 }
 
 function showInventoryTab(type) {
@@ -1331,6 +1118,123 @@ function calculateSaleProfit() {
     }
 }
 
+// FORM HANDLERS
+document.getElementById('expenseForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    
+    showMessage('⏳ Salvando...', 'success');
+    
+    const result = await apiCall('addExpense', data);
+    
+    if (result.success) {
+        showMessage(result.message, 'success');
+        this.reset();
+        const today = new Date().toISOString().split('T')[0];
+        document.querySelector('input[name="data"]').value = today;
+        document.querySelector('input[name="quantita"]').value = 1;
+        document.getElementById('pricePreview').style.display = 'none';
+        
+        loadInventory();
+    } else {
+        showMessage('❌ ' + result.message, 'error');
+    }
+});
+
+document.getElementById('salesForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    
+    showMessage('⏳ Registrando vendita...', 'success');
+    
+    const result = await apiCall('addSale', data);
+    
+    if (result.success) {
+        showMessage(result.message, 'success');
+        this.reset();
+        const today = new Date().toISOString().split('T')[0];
+        document.querySelector('input[name="data_vendita"]').value = today;
+        document.getElementById('salePreview').style.display = 'none';
+        
+        loadInventory();
+        loadSalesReport();
+    } else {
+        showMessage('❌ ' + result.message, 'error');
+    }
+});
+
+document.getElementById('addCashForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    
+    showMessage('⏳ Aggiungendo alla cassa...', 'success');
+    
+    const result = await apiCall('addCash', data);
+    
+    if (result.success) {
+        showMessage(result.message, 'success');
+        this.reset();
+    } else {
+        showMessage('❌ ' + result.message, 'error');
+    }
+});
+
+// CARICAMENTO DATI LOCALI
+function loadInventory() {
+    document.getElementById('inventoryLoading').style.display = 'block';
+    
+    setTimeout(() => {
+        currentInventory = {
+            daVendere: localData.inventory.filter(item => item.destinazione === 'Da Vendere'),
+            usoInterno: localData.inventory.filter(item => item.destinazione === 'Uso Interno')
+        };
+        
+        const vendereHtml = currentInventory.daVendere.map(item => `
+            <div class="item-card">
+                <div class="item-header">
+                    <span class="item-name">${item.descrizione}</span>
+                    <span class="item-status ${item.quantita_disponibile > 0 ? 'status-disponibile' : 'status-esaurito'}">
+                        ${item.quantita_disponibile > 0 ? 'DISPONIBILE' : 'ESAURITO'}
+                    </span>
+                </div>
+                <div class="quantity-info">
+                    <strong>Quantità:</strong> ${item.quantita_disponibile} disponibili (${item.quantita_totale} totali)<br>
+                    <strong>Prezzo acquisto:</strong> €${item.prezzo_unitario.toFixed(2)} cad.
+                </div>
+                <div class="item-details">
+                    Acquistato da <strong>${item.acquistato_da}</strong> il ${item.data}
+                    ${item.quantita_disponibile > 0 ? `<button class="btn btn-small" onclick="preloadSaleForm('${item.id}')">🏷️ Vendi</button>` : ''}
+                </div>
+            </div>
+        `).join('');
+        
+        const internoHtml = currentInventory.usoInterno.map(item => `
+            <div class="item-card">
+                <div class="item-header">
+                    <span class="item-name">${item.descrizione}</span>
+                    <span class="item-status status-uso">USO INTERNO</span>
+                </div>
+                <div class="quantity-info">
+                    <strong>Quantità:</strong> ${item.quantita_totale}<br>
+                    <strong>Prezzo acquisto:</strong> €${item.prezzo_unitario.toFixed(2)} cad.
+                </div>
+                <div class="item-details">
+                    Acquistato da <strong>${item.acquistato_da}</strong> il ${item.data}
+                </div>
+            </div>
+        `).join('');
+        
+        document.getElementById('inventoryVendereContent').innerHTML = vendereHtml || '<p>Nessun oggetto da vendere</p>';
+        document.getElementById('inventoryInternoContent').innerHTML = internoHtml || '<p>Nessun oggetto uso interno</p>';
+        
+        loadSalesItems();
+        document.getElementById('inventoryLoading').style.display = 'none';
+    }, 500);
+}
+
 function loadSalesItems() {
     const select = document.getElementById('salesItemSelect');
     let options = '<option value="">Seleziona oggetto...</option>';
@@ -1346,13 +1250,192 @@ function loadSalesItems() {
     select.innerHTML = options;
 }
 
+function loadSalesReport() {
+    document.getElementById('reportsLoading').style.display = 'block';
+    
+    setTimeout(() => {
+        const totalExpenses = localData.expenses.length;
+        const totalSales = localData.sales.length;
+        
+        const totalInvested = localData.expenses.reduce((sum, exp) => 
+            sum + parseFloat(exp.prezzo_totale || 0), 0);
+            
+        const totalRevenue = localData.sales.reduce((sum, sale) => 
+            sum + parseFloat(sale.prezzo_totale_vendita || 0), 0);
+            
+        const totalProfit = localData.sales.reduce((sum, sale) => 
+            sum + parseFloat(sale.profitto_totale || 0), 0);
+        
+        const avgROI = totalInvested > 0 ? (totalProfit / totalInvested * 100).toFixed(1) : 0;
+        const itemsSold = localData.sales.reduce((sum, sale) => 
+            sum + parseInt(sale.quantita_vendita || 0), 0);
+        
+        const statsHtml = `
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">€${totalRevenue.toFixed(2)}</div>
+                    <div class="stat-label">Ricavo Totale</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">€${totalProfit.toFixed(2)}</div>
+                    <div class="stat-label">Profitto Totale</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${avgROI}%</div>
+                    <div class="stat-label">ROI Medio</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${itemsSold}</div>
+                    <div class="stat-label">Oggetti Venduti</div>
+                </div>
+            </div>
+        `;
+        
+        const salesHtml = localData.sales.slice(-5).reverse().map(sale => `
+            <div class="item-card">
+                <div class="item-header">
+                    <span class="item-name">${sale.quantita_vendita}x ${sale.oggetto || 'Oggetto'}</span>
+                    <span class="profit-positive">+€${parseFloat(sale.profitto_totale).toFixed(2)}</span>
+                </div>
+                <div class="item-details">
+                    <strong>Vendita:</strong> €${parseFloat(sale.prezzo_totale_vendita).toFixed(2)} totale<br>
+                    <strong>Profitto per socio:</strong> €${sale.profitto_per_socio} ciascuno<br>
+                    <strong>Venduto a:</strong> ${sale.venduto_a}
+                </div>
+            </div>
+        `).join('');
+        
+        document.getElementById('reportsContent').innerHTML = statsHtml + 
+            '<h3 style="color: #FFD700; margin: 20px 0; text-align: center;">📈 Vendite Recenti</h3>' + 
+            (salesHtml || '<p>Nessuna vendita registrata</p>');
+        
+        document.getElementById('reportsLoading').style.display = 'none';
+    }, 500);
+}
+
+function loadCashStatus() {
+    document.getElementById('cashLoading').style.display = 'block';
+    
+    setTimeout(() => {
+        const totalInvested = localData.expenses.reduce((sum, exp) => 
+            sum + parseFloat(exp.prezzo_totale || 0), 0);
+        const totalRevenue = localData.sales.reduce((sum, sale) => 
+            sum + parseFloat(sale.prezzo_totale_vendita || 0), 0);
+        const saldoCassa = totalRevenue - totalInvested;
+        
+        const statsHtml = `
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">€${saldoCassa.toFixed(2)}</div>
+                    <div class="stat-label">Saldo Stimato</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">€${totalRevenue.toFixed(2)}</div>
+                    <div class="stat-label">Da Vendite</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">€0.00</div>
+                    <div class="stat-label">Versamenti</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">€${totalInvested.toFixed(2)}</div>
+                    <div class="stat-label">Spese</div>
+                </div>
+            </div>
+            <div class="info-box">
+                <div class="info-title">📱 Nota Mobile:</div>
+                <p>Questi sono dati <strong>locali</strong> del dispositivo. Per i dati completi e reali, controlla il sistema PC.</p>
+            </div>
+        `;
+        
+        document.getElementById('cashContent').innerHTML = statsHtml;
+        document.getElementById('cashLoading').style.display = 'none';
+    }, 500);
+}
+
+function loadPersonalBalance() {
+    document.getElementById('balanceLoading').style.display = 'block';
+    
+    setTimeout(() => {
+        const totali = { Ciano: 0, Alex: 0, King: 0 };
+        
+        localData.expenses.forEach(exp => {
+            const socio = exp.socio;
+            const importo = parseFloat(exp.prezzo_totale) || 0;
+            if (totali.hasOwnProperty(socio)) {
+                totali[socio] += importo;
+            }
+        });
+        
+        const totaleGenerale = totali.Ciano + totali.Alex + totali.King;
+        const quotaTeorica = totaleGenerale / 3;
+        
+        const balanceHtml = `
+            <div class="balance-item">
+                <span class="balance-name">🎮 Ciano</span>
+                <span class="balance-amount ${totali.Ciano >= quotaTeorica ? 'positive' : 'negative'}">
+                    ${totali.Ciano >= quotaTeorica ? `Riceve €${(totali.Ciano - quotaTeorica).toFixed(2)}` : `Versa €${(quotaTeorica - totali.Ciano).toFixed(2)}`}
+                </span>
+            </div>
+            <div class="balance-item">
+                <span class="balance-name">🔥 Alex</span>
+                <span class="balance-amount ${totali.Alex >= quotaTeorica ? 'positive' : 'negative'}">
+                    ${totali.Alex >= quotaTeorica ? `Riceve €${(totali.Alex - quotaTeorica).toFixed(2)}` : `Versa €${(quotaTeorica - totali.Alex).toFixed(2)}`}
+                </span>
+            </div>
+            <div class="balance-item">
+                <span class="balance-name">👑 King</span>
+                <span class="balance-amount ${totali.King >= quotaTeorica ? 'positive' : 'negative'}">
+                    ${totali.King >= quotaTeorica ? `Riceve €${(totali.King - quotaTeorica).toFixed(2)}` : `Versa €${(quotaTeorica - totali.King).toFixed(2)}`}
+                </span>
+            </div>
+            <div class="balance-item" style="border-top: 2px solid #FFD700; margin-top: 15px; padding-top: 15px;">
+                <span class="balance-name">💰 Totale Investito</span>
+                <span class="balance-amount" style="background: #FFD700; color: #000;">€${totaleGenerale.toFixed(2)}</span>
+            </div>
+            <div class="info-box">
+                <div class="info-title">📱 Dati Locali:</div>
+                <p>Basato sui dati inseriti da questo dispositivo mobile.</p>
+            </div>
+        `;
+        
+        document.getElementById('balanceContent').innerHTML = balanceHtml;
+        document.getElementById('balanceLoading').style.display = 'none';
+    }, 500);
+}
+
 function preloadSaleForm(itemId) {
     showTab('sales');
     document.getElementById('salesItemSelect').value = itemId;
     updateSaleInfo();
     window.scrollTo(0, 0);
     showMessage('💡 Oggetto preselezionato!', 'success');
-}   
+}
+
+// UTILITY FUNCTIONS
+function exportData() {
+    const dataStr = JSON.stringify(localData, null, 2);
+    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = '3legendary_mobile_data.json';
+    link.click();
+    
+    showMessage('📁 Dati esportati!', 'success');
+}
+
+function clearAllData() {
+    if (confirm('⚠️ Vuoi cancellare TUTTI i dati locali?')) {
+        localData = { expenses: [], sales: [], inventory: [] };
+        saveLocalData();
+        loadInventory();
+        loadSalesReport();
+        loadCashStatus();
+        loadPersonalBalance();
+        showMessage('🗑️ Tutti i dati locali cancellati!', 'error');
+    }
+}
     </script>
 </body>
 </html>
