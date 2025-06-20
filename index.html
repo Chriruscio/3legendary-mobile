@@ -869,387 +869,316 @@
     </div>
 
     <script>
-        let currentInventory = {};
-        
-        // Imposta data odierna
-        document.addEventListener('DOMContentLoaded', function() {
-            const today = new Date().toISOString().split('T')[0];
-            document.querySelectorAll('input[type="date"]').forEach(input => {
-                if (!input.value) input.value = today;
-            });
-            
-            // Carica dati iniziali
-            loadInventory();
-            loadSalesItems();
+        // 🚀 CONFIGURAZIONE API
+const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbzfEuEHWVffEsOn1W1ZqTZHw7J0H_YacXLGVe-JzVemunw33hom8LBpk0dxvT4yVVhq1Q/exec';
+
+// FUNZIONE PER CHIAMATE API
+async function apiCall(action, data = {}) {
+    try {
+        const params = new URLSearchParams({
+            action: action,
+            ...data
         });
-
-        function showTab(tabName) {
-            document.querySelectorAll('.form-section').forEach(section => {
-                section.classList.remove('active');
-            });
-            
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            document.getElementById(tabName).classList.add('active');
-            document.querySelector(`[onclick="showTab('${tabName}')"]`).classList.add('active');
-            
-            // Carica dati quando necessario
-            if (tabName === 'inventory') loadInventory();
-            if (tabName === 'reports') loadSalesReport();
-            if (tabName === 'cash') loadCashStatus();
-            if (tabName === 'balance') loadPersonalBalance();
-            if (tabName === 'sales') loadSalesItems();
-        }
-
-        function showInventoryTab(type) {
-            document.querySelectorAll('.inventory-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            document.querySelectorAll('.inventory-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            
-            event.target.classList.add('active');
-            document.getElementById('inventario-' + type).classList.add('active');
-        }
-
-        function showMessage(text, type) {
-            const messageDiv = document.getElementById('message');
-            messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
-            setTimeout(() => {
-                messageDiv.innerHTML = '';
-            }, 5000);
-        }
-
-        // CALCOLI AUTOMATICI
-        function calculateUnitPrice() {
-            const quantita = parseInt(document.querySelector('input[name="quantita"]').value) || 0;
-            const prezzoTotale = parseFloat(document.querySelector('input[name="prezzo_totale"]').value) || 0;
-            
-            if (quantita > 0 && prezzoTotale > 0) {
-                const prezzoUnitario = prezzoTotale / quantita;
-                document.getElementById('pricePreview').style.display = 'block';
-                document.getElementById('priceCalc').innerHTML = `
-                    <strong>${quantita}x</strong> a <strong>€${prezzoUnitario.toFixed(2)}</strong> per pezzo
-                `;
-            } else {
-                document.getElementById('pricePreview').style.display = 'none';
+        
+        const response = await fetch(`${API_BASE_URL}?${params}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
             }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+        
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('API Error:', error);
+        return { success: false, message: 'Errore di connessione: ' + error.message };
+    }
+}
 
-        function updateSaleInfo() {
-            const select = document.getElementById('salesItemSelect');
-            const selectedId = select.value;
-            
-            if (selectedId && currentInventory.daVendere) {
-                const item = currentInventory.daVendere.find(i => i.id === selectedId);
-                if (item) {
-                    document.getElementById('itemInfo').style.display = 'block';
-                    document.getElementById('itemDetails').innerHTML = `
-                        <strong>${item.descrizione}</strong><br>
-                        <strong>Disponibili:</strong> ${item.quantita_disponibile} | 
-                        <strong>Prezzo:</strong> €${item.prezzo_unitario.toFixed(2)} cad.
-                    `;
-                    
-                    const quantityInput = document.querySelector('input[name="quantita_vendita"]');
-                    quantityInput.max = item.quantita_disponibile;
-                    quantityInput.value = Math.min(1, item.quantita_disponibile);
-                    
-                    calculateSaleProfit();
-                }
-            } else {
-                document.getElementById('itemInfo').style.display = 'none';
-                document.getElementById('salePreview').style.display = 'none';
-            }
-        }
+// SOSTITUZIONE FORM HANDLERS
 
-        function calculateSaleProfit() {
-            const select = document.getElementById('salesItemSelect');
-            const selectedId = select.value;
-            const quantitaVendita = parseInt(document.querySelector('input[name="quantita_vendita"]').value) || 0;
-            const prezzoTotaleVendita = parseFloat(document.querySelector('input[name="prezzo_totale_vendita"]').value) || 0;
-            
-            if (selectedId && currentInventory.daVendere && quantitaVendita > 0 && prezzoTotaleVendita > 0) {
-                const item = currentInventory.daVendere.find(i => i.id === selectedId);
-                if (item) {
-                    const costoTotale = item.prezzo_unitario * quantitaVendita;
-                    const profittoTotale = prezzoTotaleVendita - costoTotale;
-                    const percentuale = ((profittoTotale / costoTotale) * 100).toFixed(1);
-                    const profittoPerSocio = profittoTotale / 3;
-                    
-                    const profitClass = profittoTotale >= 0 ? 'profit-positive' : 'profit-negative';
-                    
-                    document.getElementById('salePreview').style.display = 'block';
-                    document.getElementById('saleCalc').innerHTML = `
-                        <strong>Costo:</strong> €${costoTotale.toFixed(2)}<br>
-                        <strong>Ricavo:</strong> €${prezzoTotaleVendita.toFixed(2)}<br>
-                        <strong>Profitto:</strong> <span class="${profitClass}">€${profittoTotale.toFixed(2)} (${percentuale}%)</span><br>
-                        <strong>Per socio:</strong> €${profittoPerSocio.toFixed(2)} ciascuno
-                    `;
-                }
-            } else {
-                document.getElementById('salePreview').style.display = 'none';
-            }
-        }
-
-        // FORM HANDLERS (stesso codice di prima)
-        document.getElementById('expenseForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData);
-            
-            // Simula il salvataggio per demo
-            showMessage('✅ Spesa salvata! (Demo mode - collegare a Google Sheets)', 'success');
+// 1. FORM SPESE - SOSTITUISCI IL FORM HANDLER ESISTENTE
+document.getElementById('expenseForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    
+    // Mostra loading
+    showMessage('⏳ Salvando...', 'success');
+    
+    try {
+        const result = await apiCall('addExpense', data);
+        
+        if (result.success) {
+            showMessage(result.message, 'success');
             this.reset();
             const today = new Date().toISOString().split('T')[0];
             document.querySelector('input[name="data"]').value = today;
             document.querySelector('input[name="quantita"]').value = 1;
             document.getElementById('pricePreview').style.display = 'none';
-        });
-
-        document.getElementById('salesForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData);
             
-            showMessage('✅ Vendita registrata! (Demo mode)', 'success');
+            // Ricarica inventario se necessario
+            if (data.categoria === 'Da Vendere' || data.categoria === 'Uso Interno') {
+                loadInventory();
+            }
+        } else {
+            showMessage('❌ ' + result.message, 'error');
+        }
+    } catch (error) {
+        showMessage('❌ Errore di connessione!', 'error');
+    }
+});
+
+// 2. FORM VENDITE - SOSTITUISCI IL FORM HANDLER ESISTENTE
+document.getElementById('salesForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    
+    showMessage('⏳ Registrando vendita...', 'success');
+    
+    try {
+        const result = await apiCall('addSale', data);
+        
+        if (result.success) {
+            showMessage(result.message, 'success');
             this.reset();
             const today = new Date().toISOString().split('T')[0];
             document.querySelector('input[name="data_vendita"]').value = today;
             document.getElementById('salePreview').style.display = 'none';
-            document.getElementById('itemInfo').style.display = 'none';
-        });
-
-        document.getElementById('addCashForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData);
             
-            showMessage('✅ Denaro aggiunto alla cassa! (Demo mode)', 'success');
+            loadInventory();
+            loadSalesReport();
+        } else {
+            showMessage('❌ ' + result.message, 'error');
+        }
+    } catch (error) {
+        showMessage('❌ Errore di connessione!', 'error');
+    }
+});
+
+// 3. FORM CASSA - SOSTITUISCI IL FORM HANDLER ESISTENTE
+document.getElementById('addCashForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    
+    showMessage('⏳ Aggiungendo alla cassa...', 'success');
+    
+    try {
+        const result = await apiCall('addCash', data);
+        
+        if (result.success) {
+            showMessage(result.message, 'success');
             this.reset();
-        });
-
-        // LOAD FUNCTIONS (versioni demo)
-        function loadInventory() {
-            document.getElementById('inventoryLoading').style.display = 'block';
-            
-            setTimeout(() => {
-                document.getElementById('inventoryLoading').style.display = 'none';
-                
-                const vendereHtml = `
-                    <div class="item-card">
-                        <div class="item-header">
-                            <span class="item-name">Booster Darkness Ablaze</span>
-                            <span class="item-status status-disponibile">DISPONIBILE</span>
-                        </div>
-                        <div class="quantity-info">
-                            <strong>Quantità:</strong> 8 disponibili (10 totali)<br>
-                            <strong>Prezzo acquisto:</strong> €12.00 cad.
-                        </div>
-                        <div class="item-details">
-                            Acquistato da <strong>Ciano</strong> il 15/06/2025
-                            <button class="btn btn-small" onclick="preloadSaleForm('demo1')">🏷️ Vendi</button>
-                        </div>
-                    </div>
-                    <div class="item-card">
-                        <div class="item-header">
-                            <span class="item-name">Charizard VMAX</span>
-                            <span class="item-status status-disponibile">DISPONIBILE</span>
-                        </div>
-                        <div class="quantity-info">
-                            <strong>Quantità:</strong> 1 disponibili (1 totali)<br>
-                            <strong>Prezzo acquisto:</strong> €50.00 cad.
-                        </div>
-                        <div class="item-details">
-                            Acquistato da <strong>Alex</strong> il 18/06/2025
-                            <button class="btn btn-small" onclick="preloadSaleForm('demo2')">🏷️ Vendi</button>
-                        </div>
-                    </div>
-                `;
-                
-                const internoHtml = `
-                    <div class="item-card">
-                        <div class="item-header">
-                            <span class="item-name">Ring Light</span>
-                            <span class="item-status status-uso">USO INTERNO</span>
-                        </div>
-                        <div class="quantity-info">
-                            <strong>Quantità:</strong> 1<br>
-                            <strong>Prezzo acquisto:</strong> €45.00 cad.
-                        </div>
-                        <div class="item-details">
-                            Acquistato da <strong>King</strong> il 10/06/2025
-                        </div>
-                    </div>
-                `;
-                
-                document.getElementById('inventoryVendereContent').innerHTML = vendereHtml;
-                document.getElementById('inventoryInternoContent').innerHTML = internoHtml;
-                
-                // Aggiorna anche select vendite
-                currentInventory = {
-                    daVendere: [
-                        {id: 'demo1', descrizione: 'Booster Darkness Ablaze', quantita_disponibile: 8, prezzo_unitario: 12.00},
-                        {id: 'demo2', descrizione: 'Charizard VMAX', quantita_disponibile: 1, prezzo_unitario: 50.00}
-                    ]
-                };
-                
-                loadSalesItems();
-            }, 1000);
+            loadCashStatus();
+        } else {
+            showMessage('❌ ' + result.message, 'error');
         }
+    } catch (error) {
+        showMessage('❌ Errore di connessione!', 'error');
+    }
+});
 
-        function loadSalesItems() {
-            const select = document.getElementById('salesItemSelect');
-            let options = '<option value="">Seleziona oggetto...</option>';
+// 4. CARICAMENTO INVENTARIO - SOSTITUISCI LA FUNZIONE loadInventory
+async function loadInventory() {
+    document.getElementById('inventoryLoading').style.display = 'block';
+    
+    try {
+        const result = await apiCall('getInventory');
+        
+        if (result.success) {
+            currentInventory = result.data;
             
-            if (currentInventory.daVendere) {
-                currentInventory.daVendere.forEach(item => {
-                    if (item.quantita_disponibile > 0) {
-                        options += `<option value="${item.id}">${item.descrizione} (${item.quantita_disponibile} disp. - €${item.prezzo_unitario.toFixed(2)} cad.)</option>`;
-                    }
-                });
-            }
+            // Aggiorna interfaccia inventario
+            const vendereHtml = result.data.daVendere.map(item => `
+                <div class="item-card">
+                    <div class="item-header">
+                        <span class="item-name">${item.descrizione}</span>
+                        <span class="item-status ${item.quantita_disponibile > 0 ? 'status-disponibile' : 'status-esaurito'}">
+                            ${item.quantita_disponibile > 0 ? 'DISPONIBILE' : 'ESAURITO'}
+                        </span>
+                    </div>
+                    <div class="quantity-info">
+                        <strong>Quantità:</strong> ${item.quantita_disponibile} disponibili (${item.quantita_totale} totali)<br>
+                        <strong>Prezzo acquisto:</strong> €${parseFloat(item.prezzo_unitario).toFixed(2)} cad.
+                    </div>
+                    <div class="item-details">
+                        Acquistato da <strong>${item.acquistato_da}</strong> il ${item.data}
+                        ${item.quantita_disponibile > 0 ? `<button class="btn btn-small" onclick="preloadSaleForm('${item.id}')">🏷️ Vendi</button>` : ''}
+                    </div>
+                </div>
+            `).join('');
             
-            select.innerHTML = options;
-        }
-
-        function loadSalesReport() {
-            document.getElementById('reportsLoading').style.display = 'block';
+            const internoHtml = result.data.usoInterno.map(item => `
+                <div class="item-card">
+                    <div class="item-header">
+                        <span class="item-name">${item.descrizione}</span>
+                        <span class="item-status status-uso">USO INTERNO</span>
+                    </div>
+                    <div class="quantity-info">
+                        <strong>Quantità:</strong> ${item.quantita_totale}<br>
+                        <strong>Prezzo acquisto:</strong> €${parseFloat(item.prezzo_unitario).toFixed(2)} cad.
+                    </div>
+                    <div class="item-details">
+                        Acquistato da <strong>${item.acquistato_da}</strong> il ${item.data}
+                    </div>
+                </div>
+            `).join('');
             
-            setTimeout(() => {
-                document.getElementById('reportsLoading').style.display = 'none';
-                
-                const html = `
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-value">€240</div>
-                            <div class="stat-label">Ricavo Totale</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value">€85</div>
-                            <div class="stat-label">Profitto Totale</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value">54.8%</div>
-                            <div class="stat-label">ROI Medio</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value">12</div>
-                            <div class="stat-label">Oggetti Venduti</div>
-                        </div>
-                    </div>
-                    
-                    <h3 style="color: #FFD700; margin: 20px 0; text-align: center;">📈 Vendite Recenti</h3>
-                    
-                    <div class="item-card">
-                        <div class="item-header">
-                            <span class="item-name">2x Booster Darkness Ablaze</span>
-                            <span class="profit-positive">+€16 (+66%)</span>
-                        </div>
-                        <div class="item-details">
-                            <strong>Vendita:</strong> €40 totale (€20 cad.)<br>
-                            <strong>Costo:</strong> €24 totale (€12 cad.)<br>
-                            <strong>Profitto per socio:</strong> €5.33 ciascuno
-                        </div>
-                    </div>
-                `;
-                
-                document.getElementById('reportsContent').innerHTML = html;
-            }, 800);
-        }
-
-        function loadCashStatus() {
-            document.getElementById('cashLoading').style.display = 'block';
+            document.getElementById('inventoryVendereContent').innerHTML = vendereHtml || '<p>Nessun oggetto da vendere</p>';
+            document.getElementById('inventoryInternoContent').innerHTML = internoHtml || '<p>Nessun oggetto uso interno</p>';
             
-            setTimeout(() => {
-                document.getElementById('cashLoading').style.display = 'none';
-                
-                const html = `
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-value">€385</div>
-                            <div class="stat-label">Saldo Attuale</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value">€240</div>
-                            <div class="stat-label">Da Vendite</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value">€300</div>
-                            <div class="stat-label">Versamenti</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value">€155</div>
-                            <div class="stat-label">Spese</div>
-                        </div>
-                    </div>
-                    
-                    <h3 style="color: #FFD700; margin: 20px 0;">📊 Divisione Profitti</h3>
-                    <div class="balance-item">
-                        <span class="balance-name">🎮 Quota Ciano</span>
-                        <span class="balance-amount positive">€28.33</span>
-                    </div>
-                    <div class="balance-item">
-                        <span class="balance-name">🔥 Quota Alex</span>
-                        <span class="balance-amount positive">€28.33</span>
-                    </div>
-                    <div class="balance-item">
-                        <span class="balance-name">👑 Quota King</span>
-                        <span class="balance-amount positive">€28.33</span>
-                    </div>
-                `;
-                
-                document.getElementById('cashContent').innerHTML = html;
-            }, 800);
+            loadSalesItems();
+        } else {
+            showMessage('❌ ' + result.message, 'error');
         }
+    } catch (error) {
+        showMessage('❌ Errore caricamento inventario!', 'error');
+    }
+    
+    document.getElementById('inventoryLoading').style.display = 'none';
+}
 
-        function loadPersonalBalance() {
-            document.getElementById('balanceLoading').style.display = 'block';
+// 5. CARICAMENTO REPORT VENDITE - SOSTITUISCI LA FUNZIONE loadSalesReport
+async function loadSalesReport() {
+    document.getElementById('reportsLoading').style.display = 'block';
+    
+    try {
+        const result = await apiCall('getSalesReport');
+        
+        if (result.success) {
+            const { sales, stats } = result;
             
-            setTimeout(() => {
-                document.getElementById('balanceLoading').style.display = 'none';
-                
-                const html = `
-                    <div class="balance-item">
-                        <span class="balance-name">🎮 Ciano</span>
-                        <span class="balance-amount positive">Riceve €25.00</span>
+            const statsHtml = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">€${stats.totalRevenue.toFixed(2)}</div>
+                        <div class="stat-label">Ricavo Totale</div>
                     </div>
-                    <div class="balance-item">
-                        <span class="balance-name">🔥 Alex</span>
-                        <span class="balance-amount negative">Versa €15.00</span>
+                    <div class="stat-card">
+                        <div class="stat-value">€${stats.totalProfit.toFixed(2)}</div>
+                        <div class="stat-label">Profitto Totale</div>
                     </div>
-                    <div class="balance-item">
-                        <span class="balance-name">👑 King</span>
-                        <span class="balance-amount negative">Versa €10.00</span>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.avgROI}%</div>
+                        <div class="stat-label">ROI Medio</div>
                     </div>
-                    
-                    <div class="balance-item" style="border-top: 2px solid #FFD700; margin-top: 15px; padding-top: 15px;">
-                        <span class="balance-name">💰 Totale Investito</span>
-                        <span class="balance-amount" style="background: #FFD700; color: #000;">€420.00</span>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.itemsSold}</div>
+                        <div class="stat-label">Oggetti Venduti</div>
                     </div>
-                    <div class="balance-item">
-                        <span class="balance-name">⚖️ Quota Teorica</span>
-                        <span class="balance-amount neutral">€140.00</span>
+                </div>
+            `;
+            
+            const salesHtml = sales.slice(-5).reverse().map(sale => `
+                <div class="item-card">
+                    <div class="item-header">
+                        <span class="item-name">${sale.quantita}x ${sale.oggetto}</span>
+                        <span class="profit-positive">+€${parseFloat(sale.profitto_totale).toFixed(2)}</span>
                     </div>
-                `;
-                
-                document.getElementById('balanceContent').innerHTML = html;
-            }, 800);
+                    <div class="item-details">
+                        <strong>Vendita:</strong> €${parseFloat(sale.prezzo_totale_vendita).toFixed(2)} totale<br>
+                        <strong>Profitto per socio:</strong> €${(parseFloat(sale.profitto_totale) / 3).toFixed(2)} ciascuno<br>
+                        <strong>Venduto a:</strong> ${sale.venduto_a}
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('reportsContent').innerHTML = statsHtml + '<h3 style="color: #FFD700; margin: 20px 0; text-align: center;">📈 Vendite Recenti</h3>' + salesHtml;
+        } else {
+            showMessage('❌ ' + result.message, 'error');
         }
+    } catch (error) {
+        showMessage('❌ Errore caricamento report!', 'error');
+    }
+    
+    document.getElementById('reportsLoading').style.display = 'none';
+}
 
-        function preloadSaleForm(itemId) {
-            showTab('sales');
-            document.getElementById('salesItemSelect').value = itemId;
-            updateSaleInfo();
-            window.scrollTo(0, 0);
-            showMessage('💡 Oggetto preselezionato!', 'success');
+// 6. CARICAMENTO STATO CASSA - SOSTITUISCI LA FUNZIONE loadCashStatus  
+async function loadCashStatus() {
+    document.getElementById('cashLoading').style.display = 'block';
+    
+    try {
+        const result = await apiCall('getCashStatus');
+        
+        if (result.success) {
+            const statsHtml = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">€${result.saldoCassa.toFixed(2)}</div>
+                        <div class="stat-label">Saldo Attuale</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">€${result.daVendite.toFixed(2)}</div>
+                        <div class="stat-label">Da Vendite</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">€${result.versamenti.toFixed(2)}</div>
+                        <div class="stat-label">Versamenti</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">€${result.spese.toFixed(2)}</div>
+                        <div class="stat-label">Spese</div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('cashContent').innerHTML = statsHtml;
+        } else {
+            showMessage('❌ ' + result.message, 'error');
         }
+    } catch (error) {
+        showMessage('❌ Errore caricamento cassa!', 'error');
+    }
+    
+    document.getElementById('cashLoading').style.display = 'none';
+}
 
-        // Carica dati iniziali
-        loadInventory();
+// 7. CARICAMENTO BILANCIO PERSONALE - SOSTITUISCI LA FUNZIONE loadPersonalBalance
+async function loadPersonalBalance() {
+    document.getElementById('balanceLoading').style.display = 'block';
+    
+    try {
+        const result = await apiCall('getPersonalBalance');
+        
+        if (result.success) {
+            const { balance } = result;
+            
+            const balanceHtml = `
+                <div class="balance-item">
+                    <span class="balance-name">🎮 Ciano</span>
+                    <span class="balance-amount ${balance.ciano.differenza >= 0 ? 'positive' : 'negative'}">${balance.ciano.stato}</span>
+                </div>
+                <div class="balance-item">
+                    <span class="balance-name">🔥 Alex</span>
+                    <span class="balance-amount ${balance.alex.differenza >= 0 ? 'positive' : 'negative'}">${balance.alex.stato}</span>
+                </div>
+                <div class="balance-item">
+                    <span class="balance-name">👑 King</span>
+                    <span class="balance-amount ${balance.king.differenza >= 0 ? 'positive' : 'negative'}">${balance.king.stato}</span>
+                </div>
+                <div class="balance-item" style="border-top: 2px solid #FFD700; margin-top: 15px; padding-top: 15px;">
+                    <span class="balance-name">💰 Totale Investito</span>
+                    <span class="balance-amount" style="background: #FFD700; color: #000;">€${balance.totale.toFixed(2)}</span>
+                </div>
+            `;
+            
+            document.getElementById('balanceContent').innerHTML = balanceHtml;
+        } else {
+            showMessage('❌ ' + result.message, 'error');
+        }
+    } catch (error) {
+        showMessage('❌ Errore caricamento bilancio!', 'error');
+    }
+    
+    document.getElementById('balanceLoading').style.display = 'none';
+}
     </script>
 </body>
 </html>
