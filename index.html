@@ -986,7 +986,26 @@ document.getElementById('salesForm')?.addEventListener('submit', async function(
         showMessage('❌ Errore: ' + error.message, 'error');
     }
 });
-document.getElementById('addCashForm')?.addEventListener('submit', (e) => { e.preventDefault(); showMessage('✅ Denaro aggiunto!', 'success'); });
+document.getElementById('addCashForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(this));
+    
+    showMessage('⏳ Aggiungendo alla cassa...', 'success');
+    
+    try {
+        const result = await apiCall('addCash', data);
+        
+        if (result.success) {
+            showMessage(result.message, 'success');
+            this.reset();
+            loadCashStatus();
+        } else {
+            showMessage('❌ ' + result.message, 'error');
+        }
+    } catch (error) {
+        showMessage('❌ Errore: ' + error.message, 'error');
+    }
+});
 
 // CARICAMENTO SEZIONI
 async function loadInventory() {
@@ -1127,9 +1146,43 @@ async function loadSalesReport() {
     
     document.getElementById('reportsLoading').style.display = 'none';
 }
-function loadCashStatus() { 
+async function loadCashStatus() {
+    document.getElementById('cashLoading').style.display = 'block';
+    
+    try {
+        const result = await apiCall('getCashStatus');
+        
+        if (result.success) {
+            const statsHtml = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">€${result.saldoCassa.toFixed(2)}</div>
+                        <div class="stat-label">Saldo Attuale</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">€${result.daVendite.toFixed(2)}</div>
+                        <div class="stat-label">Da Vendite</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">€${result.versamenti.toFixed(2)}</div>
+                        <div class="stat-label">Versamenti</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">€${result.spese.toFixed(2)}</div>
+                        <div class="stat-label">Spese</div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('cashContent').innerHTML = statsHtml;
+        } else {
+            showMessage('❌ ' + result.message, 'error');
+        }
+    } catch (error) {
+        showMessage('❌ Errore caricamento cassa: ' + error.toString(), 'error');
+    }
+    
     document.getElementById('cashLoading').style.display = 'none';
-    document.getElementById('cashContent').innerHTML = '<p>Cassa vuota</p>'; 
 }
 function loadPersonalBalance() { 
     document.getElementById('balanceLoading').style.display = 'none';
