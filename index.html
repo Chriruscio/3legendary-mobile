@@ -850,11 +850,47 @@
                         <p><strong>Quota Teorica:</strong> Quanto dovrebbe aver speso ognuno se diviso equamente<br>
                         <strong>Nota:</strong> Spese da "Cassa Comune" NON influenzano questo bilancio</p>
                     </div>
-                    
+                    <div class="section" style="margin-top: 20px;">
+    <h3 style="color: #FFD700; margin-bottom: 15px; text-align: center;">💸 Registra Pagamento</h3>
+    <form id="internalPaymentForm">
+        <div class="two-column">
+            <div class="form-group">
+                <label>👤 Chi paga:</label>
+                <select name="da_chi" required>
+                    <option value="">Scegli...</option>
+                    <option value="Ciano">🎮 Ciano</option>
+                    <option value="Alex">🔥 Alex</option>
+                    <option value="King">👑 King</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>👤 Chi riceve:</label>
+                <select name="a_chi" required>
+                    <option value="">Scegli...</option>
+                    <option value="Ciano">🎮 Ciano</option>
+                    <option value="Alex">🔥 Alex</option>
+                    <option value="King">👑 King</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>💶 Importo €:</label>
+            <input type="number" name="importo" step="0.01" placeholder="0.00" required>
+        </div>
+        
+        <div class="form-group">
+            <label>📝 Motivo:</label>
+            <input type="text" name="motivo" placeholder="Sistemazione bilancio..." required>
+        </div>
+        
+        <button type="submit" class="btn">💸 Registra Pagamento</button>
+    </form>
+</div>
                     <div class="loading" id="balanceLoading">⏳ Caricamento...</div>
                     <div id="balanceContent"></div>
                     
-                    <button class="btn" onclick="loadPersonalBalance()">🔄 Aggiorna</button>
+                    <button class="btn" onclick="loadPersonalBalanceWithPayments()">🔄 Aggiorna</button>
                 </div>
             </div>
             
@@ -928,7 +964,7 @@ function showTab(tabName) {
     if (tabName === 'sales') loadSalesItems();
     if (tabName === 'reports') loadSalesReport();
     if (tabName === 'cash') loadCashStatus();
-    if (tabName === 'balance') loadPersonalBalance();
+    if (tabName === 'balance') loadPersonalBalanceWithPayments();
 }
 
 function showMessage(text, type) {
@@ -1006,7 +1042,33 @@ document.getElementById('addCashForm')?.addEventListener('submit', async functio
         showMessage('❌ Errore: ' + error.message, 'error');
     }
 });
-
+// FORM PAGAMENTI INTERNI
+document.getElementById('internalPaymentForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(this));
+    
+    // Validazione: non puoi pagare a te stesso
+    if (data.da_chi === data.a_chi) {
+        showMessage('❌ Non puoi pagare a te stesso!', 'error');
+        return;
+    }
+    
+    showMessage('⏳ Registrando pagamento...', 'success');
+    
+    try {
+        const result = await apiCall('addInternalPayment', data);
+        
+        if (result.success) {
+            showMessage(result.message, 'success');
+            this.reset();
+            loadPersonalBalanceWithPayments();
+        } else {
+            showMessage('❌ ' + result.message, 'error');
+        }
+    } catch (error) {
+        showMessage('❌ Errore: ' + error.message, 'error');
+    }
+});
 // CARICAMENTO SEZIONI
 async function loadInventory() {
     document.getElementById('inventoryLoading').style.display = 'block';
@@ -1323,6 +1385,71 @@ async function loadPersonalBalance() {
     
       document.getElementById('balanceLoading').style.display = 'none';
 }
+    // CARICA BILANCIO CON PAGAMENTI
+async function loadPersonalBalanceWithPayments() {
+    document.getElementById('balanceLoading').style.display = 'block';
+    
+    try {
+        const result = await apiCall('getPersonalBalanceWithPayments');
+        
+        if (result.success) {
+            const { balance, pagamenti } = result;
+            
+            const balanceHtml = `
+                <div class="balance-item">
+                    <span class="balance-name">🎮 Ciano</span>
+                    <div style="text-align: right;">
+                        <div style="font-size: 0.8em; opacity: 0.8;">Teorico: €${balance.ciano.teorico.toFixed(2)} | Pagamenti: €${balance.ciano.pagamenti.toFixed(2)}</div>
+                        <span class="balance-amount ${balance.ciano.reale >= 0 ? 'positive' : 'negative'}">${balance.ciano.stato}</span>
+                    </div>
+                </div>
+                <div class="balance-item">
+                    <span class="balance-name">🔥 Alex</span>
+                    <div style="text-align: right;">
+                        <div style="font-size: 0.8em; opacity: 0.8;">Teorico: €${balance.alex.teorico.toFixed(2)} | Pagamenti: €${balance.alex.pagamenti.toFixed(2)}</div>
+                        <span class="balance-amount ${balance.alex.reale >= 0 ? 'positive' : 'negative'}">${balance.alex.stato}</span>
+                    </div>
+                </div>
+                <div class="balance-item">
+                    <span class="balance-name">👑 King</span>
+                    <div style="text-align: right;">
+                        <div style="font-size: 0.8em; opacity: 0.8;">Teorico: €${balance.king.teorico.toFixed(2)} | Pagamenti: €${balance.king.pagamenti.toFixed(2)}</div>
+                        <span class="balance-amount ${balance.king.reale >= 0 ? 'positive' : 'negative'}">${balance.king.stato}</span>
+                    </div>
+                </div>
+                <div class="balance-item" style="border-top: 2px solid #FFD700; margin-top: 15px; padding-top: 15px;">
+                    <span class="balance-name">💰 Totale Investito</span>
+                    <span class="balance-amount" style="background: #FFD700; color: #000;">€${balance.totale.toFixed(2)}</span>
+                </div>
+            `;
+            
+            // Cronologia pagamenti
+            let paymentsHtml = '';
+            if (pagamenti && pagamenti.length > 0) {
+                paymentsHtml = `
+                    <h3 style="color: #FFD700; margin: 20px 0 10px 0; text-align: center;">📋 Ultimi Pagamenti</h3>
+                    ${pagamenti.slice(0, 5).map(payment => `
+                        <div class="cash-movement movement-out">
+                            <div>
+                                <strong>${payment[1]} → ${payment[2]}</strong><br>
+                                <small>${payment[4]} • ${new Date(payment[0]).toLocaleDateString('it-IT')}</small>
+                            </div>
+                            <span class="balance-amount negative">€${parseFloat(payment[3]).toFixed(2)}</span>
+                        </div>
+                    `).join('')}
+                `;
+            }
+            
+            document.getElementById('balanceContent').innerHTML = balanceHtml + paymentsHtml;
+        } else {
+            showMessage('❌ ' + result.message, 'error');
+        }
+    } catch (error) {
+        showMessage('❌ Errore caricamento bilancio: ' + error.toString(), 'error');
+    }
+    
+    document.getElementById('balanceLoading').style.display = 'none';
+}    
 
 // CAMBIA TAB INVENTARIO
 function showInventoryTab(type) {
