@@ -1511,21 +1511,21 @@ async function loadPersonalBalanceWithPayments() {
             
             const balanceHtml = `
                 <div class="balance-item">
-                    <span class="balance-name">🎮 Ciano</span>
+                    <span class="balance-name" onclick="showPersonDetails('Ciano')" style="cursor: pointer;">🎮 Ciano</span>
                     <div style="text-align: right;">
                         <div style="font-size: 0.8em; opacity: 0.8;">Teorico: €${balance.ciano.teorico.toFixed(2)} | Pagamenti: €${balance.ciano.pagamenti.toFixed(2)}</div>
                         <span class="balance-amount ${balance.ciano.reale >= 0 ? 'positive' : 'negative'}">${balance.ciano.stato}</span>
                     </div>
                 </div>
                 <div class="balance-item">
-                    <span class="balance-name">🔥 Alex</span>
+                    <span class="balance-name" onclick="showPersonDetails('Alex')" style="cursor: pointer;">🔥 Alex</span>
                     <div style="text-align: right;">
                         <div style="font-size: 0.8em; opacity: 0.8;">Teorico: €${balance.alex.teorico.toFixed(2)} | Pagamenti: €${balance.alex.pagamenti.toFixed(2)}</div>
                         <span class="balance-amount ${balance.alex.reale >= 0 ? 'positive' : 'negative'}">${balance.alex.stato}</span>
                     </div>
                 </div>
                 <div class="balance-item">
-                    <span class="balance-name">👑 King</span>
+                    <span class="balance-name" onclick="showPersonDetails('King')" style="cursor: pointer;">👑 King</span>
                     <div style="text-align: right;">
                         <div style="font-size: 0.8em; opacity: 0.8;">Teorico: €${balance.king.teorico.toFixed(2)} | Pagamenti: €${balance.king.pagamenti.toFixed(2)}</div>
                         <span class="balance-amount ${balance.king.reale >= 0 ? 'positive' : 'negative'}">${balance.king.stato}</span>
