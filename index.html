@@ -1072,9 +1072,60 @@ function loadSalesItems() {
     });
 }
 
-function loadSalesReport() { 
+async function loadSalesReport() {
+    document.getElementById('reportsLoading').style.display = 'block';
+    
+    try {
+        const result = await apiCall('getSalesReport');
+        
+        if (result.success) {
+            const { sales, stats } = result;
+            
+            const statsHtml = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">€${stats.totalRevenue.toFixed(2)}</div>
+                        <div class="stat-label">Ricavo Totale</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">€${stats.totalProfit.toFixed(2)}</div>
+                        <div class="stat-label">Profitto Totale</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.avgROI}%</div>
+                        <div class="stat-label">ROI Medio</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.itemsSold}</div>
+                        <div class="stat-label">Oggetti Venduti</div>
+                    </div>
+                </div>
+            `;
+            
+            const salesHtml = sales.slice(-5).reverse().map(sale => `
+                <div class="item-card">
+                    <div class="item-header">
+                        <span class="item-name">${sale.quantita}x ${sale.oggetto}</span>
+                        <span class="profit-positive">+€${parseFloat(sale.profitto_totale).toFixed(2)}</span>
+                    </div>
+                    <div class="item-details">
+                        <strong>Vendita:</strong> €${parseFloat(sale.prezzo_totale_vendita).toFixed(2)} totale<br>
+                        <strong>Profitto per socio:</strong> €${(parseFloat(sale.profitto_totale) / 3).toFixed(2)} ciascuno<br>
+                        <strong>Venduto a:</strong> ${sale.venduto_a}<br>
+                        <strong>Data:</strong> ${new Date(sale.data).toLocaleDateString('it-IT')}
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('reportsContent').innerHTML = statsHtml + '<h3 style="color: #FFD700; margin: 20px 0; text-align: center;">📈 Vendite Recenti</h3>' + (salesHtml || '<p>Nessuna vendita</p>');
+        } else {
+            showMessage('❌ ' + result.message, 'error');
+        }
+    } catch (error) {
+        showMessage('❌ Errore caricamento report: ' + error.toString(), 'error');
+    }
+    
     document.getElementById('reportsLoading').style.display = 'none';
-    document.getElementById('reportsContent').innerHTML = '<p>Nessun report disponibile</p>'; 
 }
 function loadCashStatus() { 
     document.getElementById('cashLoading').style.display = 'none';
