@@ -1184,9 +1184,43 @@ async function loadCashStatus() {
     
     document.getElementById('cashLoading').style.display = 'none';
 }
-function loadPersonalBalance() { 
+async function loadPersonalBalance() {
+    document.getElementById('balanceLoading').style.display = 'block';
+    
+    try {
+        const result = await apiCall('getPersonalBalance');
+        
+        if (result.success) {
+            const { balance } = result;
+            
+            const balanceHtml = `
+                <div class="balance-item">
+                    <span class="balance-name">🎮 Ciano</span>
+                    <span class="balance-amount ${balance.ciano.differenza >= 0 ? 'positive' : 'negative'}">${balance.ciano.stato}</span>
+                </div>
+                <div class="balance-item">
+                    <span class="balance-name">🔥 Alex</span>
+                    <span class="balance-amount ${balance.alex.differenza >= 0 ? 'positive' : 'negative'}">${balance.alex.stato}</span>
+                </div>
+                <div class="balance-item">
+                    <span class="balance-name">👑 King</span>
+                    <span class="balance-amount ${balance.king.differenza >= 0 ? 'positive' : 'negative'}">${balance.king.stato}</span>
+                </div>
+                <div class="balance-item" style="border-top: 2px solid #FFD700; margin-top: 15px; padding-top: 15px;">
+                    <span class="balance-name">💰 Totale Investito</span>
+                    <span class="balance-amount" style="background: #FFD700; color: #000;">€${balance.totale.toFixed(2)}</span>
+                </div>
+            `;
+            
+            document.getElementById('balanceContent').innerHTML = balanceHtml;
+        } else {
+            showMessage('❌ ' + result.message, 'error');
+        }
+    } catch (error) {
+        showMessage('❌ Errore caricamento bilancio: ' + error.toString(), 'error');
+    }
+    
     document.getElementById('balanceLoading').style.display = 'none';
-    document.getElementById('balanceContent').innerHTML = '<p>Nessun bilancio</p>'; 
 }
 </script>
 </body>
