@@ -870,36 +870,31 @@
 
     <script>
 // 🚀 CONFIGURAZIONE API
-const API_BASE_URL =const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbxGRzKYdKCVfusHSTQw0OWBlxGCvm7gY6Wb5WDW4r0udXumc1zrnQjoGNHlNnzwlJvAzw/exec'; 'https://script.google.com/macros/s/AKfycbzfEuEHWVffEsOn1W1ZqTZHw7J0H_YacXLGVe-JzVemunw33hom8LBpk0dxvT4yVVhq1Q/exec';
+const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbxr_3S4Z9bAK9jys6_gIS9F7ym9cgCJ3oCVl1WueK0h89nba60e6fcyhsLI7UdiGFsFzg/exec';
 
 // STORAGE LOCALE
 let localData = { expenses: [], sales: [], inventory: [] };
 
 // FUNZIONE API SEMPLIFICATA
+// ✅ NUOVA (funziona davvero)
 async function apiCall(action, data = {}) {
-    const params = new URLSearchParams({ action: action, ...data });
-    
-    // Invia al server senza leggere risposta
-    fetch(`${API_BASE_URL}?${params}`, { method: 'GET', mode: 'no-cors' }).catch(() => {});
-    
-    // Gestisci localmente
-    if (action === 'addExpense') {
-        const quantita = parseInt(data.quantita);
-        const prezzoTotale = parseFloat(data.prezzo_totale);
-        const expense = { ...data, prezzo_unitario: (prezzoTotale / quantita).toFixed(2), id: 'EXP' + Date.now() };
-        localData.expenses.push(expense);
+    try {
+        const params = new URLSearchParams({ action: action, ...data });
+        const response = await fetch(`${API_BASE_URL}?${params}`);
         
-        if (data.categoria === 'Da Vendere' || data.categoria === 'Uso Interno') {
-            localData.inventory.push({
-                id: 'INV' + Date.now(), descrizione: data.descrizione, acquistato_da: data.socio,
-                quantita_totale: quantita, quantita_disponibile: quantita, prezzo_unitario: parseFloat(expense.prezzo_unitario),
-                destinazione: data.categoria, data: data.data, stato: 'Disponibile'
-            });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-        localStorage.setItem('3legendary_mobile_data', JSON.stringify(localData));
-        return { success: true, message: `✅ Spesa salvata! ${quantita}x ${data.descrizione}` };
+        
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('API Error:', error);
+        return { 
+            success: false, 
+            message: 'Errore di connessione: ' + error.message 
+        };
     }
-    return { success: true, message: 'Operazione completata' };
 }
 
 // CARICA DATI
