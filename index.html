@@ -983,11 +983,34 @@ function calculateUnitPrice() {
     }
 }
 
-// FORM SPESE
+// FORM SPESE CON CONTROLLO SIMILARITÀ
 document.getElementById('expenseForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(this));
-    showMessage('⏳ Salvando...', 'success');
+    
+    // Se destinazione è "Da Vendere" o "Uso Interno", controlla similarità
+    if (data.categoria === 'Da Vendere' || data.categoria === 'Uso Interno') {
+        showMessage('🔍 Controllo prodotti simili...', 'success');
+        
+        try {
+            const similarResult = await apiCall('checkSimilarProducts', {
+                productName: data.descrizione,
+                categoria: data.categoria
+            });
+            
+            if (similarResult.success && similarResult.similarities.length > 0) {
+                // Trovati prodotti simili - chiedi conferma
+                const confirmed = await showSimilarProductDialog(data, similarResult.similarities);
+                if (!confirmed) return; // User cancelled
+            }
+        } catch (error) {
+            console.log('Errore controllo similarità:', error);
+            // Continua comunque con l'inserimento normale
+        }
+    }
+    
+    // Procedi con l'inserimento normale
+    showMessage('⏳ Salvando spesa...', 'success');
     const result = await apiCall('addExpense', data);
     showMessage(result.message, 'success');
     this.reset();
@@ -1237,7 +1260,73 @@ function closeEditModal() {
     const modal = document.querySelector('div[style*="position: fixed"]');
     if (modal) modal.remove();
 }     
-
+// MOSTRA DIALOG PER PRODOTTI SIMILI
+async function showSimilarProductDialog(newProductData, similarities) {
+    return new Promise((resolve) => {
+        const bestMatch = similarities[0]; // Il più simile
+        
+        const dialogHtml = `
+            <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;">
+                <div style="background: #1a1a1a; padding: 25px; border-radius: 15px; max-width: 95%; border: 3px solid #FFD700; max-height: 80vh; overflow-y: auto;">
+                    
+                    <h3 style="color: #FFD700; text-align: center; margin-bottom: 20px;">⚠️ PRODOTTO SIMILE TROVATO</h3>
+                    
+                    <div style="background: rgba(255,215,0,0.15); padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #FFD700;">
+                        <div style="color: #FFD700; font-weight: bold; margin-bottom: 8px;">📦 Stai inserendo:</div>
+                        <div style="color: #fff; font-size: 1.1em;">"${newProductData.descrizione}"</div>
+                        <div style="color: #ccc; font-size: 0.9em; margin-top: 5px;">
+                            ${newProductData.quantita}x - €${parseFloat(newProductData.prezzo_totale).toFixed(2)} totale - ${newProductData.socio}
+                        </div>
+                    </div>
+                    
+                    <div style="background: rgba(139,0,0,0.3); padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #8B0000;">
+                        <div style="color: #FFD700; font-weight: bold; margin-bottom: 8px;">🔍 Prodotto esistente simile:</div>
+                        <div style="color: #fff; font-size: 1.1em;">"${bestMatch.name}"</div>
+                        <div style="color: #ccc; font-size: 0.9em; margin-top: 5px;">
+                            ${bestMatch.quantity}x totali (${bestMatch.available}x disponibili) - €${parseFloat(bestMatch.price).toFixed(2)} cad. - ${bestMatch.owner}
+                        </div>
+                        <div style="color: #90EE90; font-size: 0.8em; margin-top: 8px;">
+                            📊 Similarità: ${bestMatch.confidence}% | Parole comuni: ${bestMatch.commonWords.join(', ')}
+                        </div>
+                    </div>
+                    
+                    <div style="color: #FFD700; font-weight: bold; margin-bottom: 15px; text-align: center;">🤔 Cosa vuoi fare?</div>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button onclick="handleSimilarChoice('unify')" style="padding: 12px; background: linear-gradient(135deg, #006400, #90EE90); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1em;">
+                            🔄 UNIFICA - Aggiungi al prodotto esistente
+                        </button>
+                        <button onclick="handleSimilarChoice('separate')" style="padding: 12px; background: linear-gradient(135deg, #8B0000, #FF0000); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1em;">
+                            🆕 SEPARA - Mantieni come prodotto diverso
+                        </button>
+                        <button onclick="handleSimilarChoice('cancel')" style="padding: 12px; background: #666; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1em;">
+                            ❌ ANNULLA - Torna alla modifica
+                        </button>
+                    </div>
+                    
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', dialogHtml);
+        
+        // Gestione scelte
+        window.handleSimilarChoice = function(choice) {
+            const modal = document.querySelector('div[style*="position: fixed"]');
+            if (modal) modal.remove();
+            
+            if (choice === 'unify') {
+                // TODO: Implementare unificazione
+                showMessage('🔄 Funzione unificazione in arrivo...', 'success');
+                resolve(false); // Per ora procedi normale
+            } else if (choice === 'separate') {
+                resolve(true); // Procedi con inserimento normale
+            } else {
+                resolve(false); // Annulla inserimento
+            }
+        };
+    });
+}
 // ELIMINA OGGETTO INVENTARIO
 function deleteItem(itemId) {
     if (confirm("Sei sicuro di voler eliminare questo oggetto?")) {
