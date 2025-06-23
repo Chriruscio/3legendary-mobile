@@ -1096,21 +1096,85 @@ function loadSalesItems() {
 }
 // MODIFICA OGGETTO INVENTARIO
 function editItem(itemId) {
-    const newName = prompt("Nuovo nome oggetto:");
-    if (newName && newName.trim()) {
-        apiCall('updateItem', {
-            id: itemId,
-            nuovo_nome: newName.trim()
-        }).then(result => {
-            if (result.success) {
-                showMessage('✅ Oggetto modificato!', 'success');
-                loadInventory();
-            } else {
-                showMessage('❌ ' + result.message, 'error');
+    // Prima recupera i dati attuali
+    apiCall('getInventory').then(result => {
+        if (result.success && result.data) {
+            // Trova l'oggetto corrente
+            let currentItem = null;
+            [...result.data.daVendere, ...result.data.usoInterno].forEach(item => {
+                if (item.id === itemId) currentItem = item;
+            });
+            
+            if (!currentItem) {
+                showMessage('❌ Oggetto non trovato', 'error');
+                return;
             }
-        });
-    }
+            
+            // Crea form di modifica
+            const editHtml = `
+                <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: #1a1a1a; padding: 30px; border-radius: 15px; max-width: 90%; border: 2px solid #8B0000;">
+                        <h3 style="color: #FFD700; text-align: center; margin-bottom: 20px;">✏️ Modifica Oggetto</h3>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label style="color: #FFD700; display: block; margin-bottom: 5px;">📝 Nome:</label>
+                            <input type="text" id="editName" value="${currentItem.descrizione}" style="width: 100%; padding: 10px; border: 2px solid #8B0000; border-radius: 8px; background: #000; color: #fff;">
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label style="color: #FFD700; display: block; margin-bottom: 5px;">📦 Quantità Totale:</label>
+                            <input type="number" id="editQuantity" value="${currentItem.quantita_totale}" min="1" style="width: 100%; padding: 10px; border: 2px solid #8B0000; border-radius: 8px; background: #000; color: #fff;">
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <label style="color: #FFD700; display: block; margin-bottom: 5px;">💰 Prezzo Unitario €:</label>
+                            <input type="number" id="editPrice" value="${currentItem.prezzo_unitario}" step="0.01" min="0" style="width: 100%; padding: 10px; border: 2px solid #8B0000; border-radius: 8px; background: #000; color: #fff;">
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="saveItemChanges('${itemId}')" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #8B0000, #FF0000); color: white; border: none; border-radius: 8px; font-weight: bold;">💾 Salva</button>
+                            <button onclick="closeEditModal()" style="flex: 1; padding: 12px; background: #666; color: white; border: none; border-radius: 8px; font-weight: bold;">❌ Annulla</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', editHtml);
+        }
+    });
 }
+   // SALVA MODIFICHE OGGETTO
+function saveItemChanges(itemId) {
+    const newName = document.getElementById('editName').value.trim();
+    const newQuantity = parseInt(document.getElementById('editQuantity').value);
+    const newPrice = parseFloat(document.getElementById('editPrice').value);
+    
+    if (!newName || newQuantity < 1 || newPrice < 0) {
+        alert('❌ Compila tutti i campi correttamente!');
+        return;
+    }
+    
+    apiCall('updateItemComplete', {
+        id: itemId,
+        nuovo_nome: newName,
+        nuova_quantita: newQuantity,
+        nuovo_prezzo: newPrice
+    }).then(result => {
+        if (result.success) {
+            showMessage('✅ Oggetto modificato!', 'success');
+            closeEditModal();
+            loadInventory();
+        } else {
+            showMessage('❌ ' + result.message, 'error');
+        }
+    });
+}
+
+// CHIUDI MODAL MODIFICA
+function closeEditModal() {
+    const modal = document.querySelector('div[style*="position: fixed"]');
+    if (modal) modal.remove();
+}     
 
 // ELIMINA OGGETTO INVENTARIO
 function deleteItem(itemId) {
