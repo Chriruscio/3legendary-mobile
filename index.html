@@ -952,9 +952,59 @@ document.getElementById('salesForm')?.addEventListener('submit', (e) => { e.prev
 document.getElementById('addCashForm')?.addEventListener('submit', (e) => { e.preventDefault(); showMessage('✅ Denaro aggiunto!', 'success'); });
 
 // CARICAMENTO SEZIONI
-function loadInventory() { 
+async function loadInventory() {
+    document.getElementById('inventoryLoading').style.display = 'block';
+    
+    try {
+        const result = await apiCall('getInventory');
+        
+        if (result.success && result.data) {
+            // Renderizza inventario da vendere
+            const vendereHtml = result.data.daVendere.map(item => `
+                <div class="item-card">
+                    <div class="item-header">
+                        <span class="item-name">${item.descrizione}</span>
+                        <span class="item-status ${item.quantita_disponibile > 0 ? 'status-disponibile' : 'status-esaurito'}">
+                            ${item.quantita_disponibile > 0 ? 'DISPONIBILE' : 'ESAURITO'}
+                        </span>
+                    </div>
+                    <div class="quantity-info">
+                        <strong>Quantità:</strong> ${item.quantita_disponibile} disponibili (${item.quantita_totale} totali)<br>
+                        <strong>Prezzo acquisto:</strong> €${parseFloat(item.prezzo_unitario).toFixed(2)} cad.
+                    </div>
+                    <div class="item-details">
+                        Acquistato da <strong>${item.acquistato_da}</strong> il ${item.data}
+                    </div>
+                </div>
+            `).join('') || '<p>Nessun oggetto da vendere</p>';
+            
+            // Renderizza inventario uso interno
+            const internoHtml = result.data.usoInterno.map(item => `
+                <div class="item-card">
+                    <div class="item-header">
+                        <span class="item-name">${item.descrizione}</span>
+                        <span class="item-status status-uso">USO INTERNO</span>
+                    </div>
+                    <div class="quantity-info">
+                        <strong>Quantità:</strong> ${item.quantita_totale}<br>
+                        <strong>Prezzo acquisto:</strong> €${parseFloat(item.prezzo_unitario).toFixed(2)} cad.
+                    </div>
+                    <div class="item-details">
+                        Acquistato da <strong>${item.acquistato_da}</strong> il ${item.data}
+                    </div>
+                </div>
+            `).join('') || '<p>Nessun oggetto uso interno</p>';
+            
+            document.getElementById('inventoryVendereContent').innerHTML = vendereHtml;
+            document.getElementById('inventoryInternoContent').innerHTML = internoHtml;
+        } else {
+            showMessage('❌ ' + (result.message || 'Errore caricamento inventario'), 'error');
+        }
+    } catch (error) {
+        showMessage('❌ Errore: ' + error.message, 'error');
+    }
+    
     document.getElementById('inventoryLoading').style.display = 'none';
-    document.getElementById('inventoryVendereContent').innerHTML = '<p>Nessun oggetto da vendere</p>'; 
 }
 function loadSalesReport() { 
     document.getElementById('reportsLoading').style.display = 'none';
