@@ -973,7 +973,12 @@ async function loadInventory() {
                         <strong>Prezzo acquisto:</strong> €${parseFloat(item.prezzo_unitario).toFixed(2)} cad.
                     </div>
                     <div class="item-details">
-                        Acquistato da <strong>${item.acquistato_da}</strong> il ${item.data}
+                        Acquistato da <strong>${item.acquistato_da}</strong> il ${new Date(item.data).toLocaleDateString('it-IT', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+})}
                     </div>
                 </div>
             `).join('') || '<p>Nessun oggetto da vendere</p>';
@@ -990,7 +995,12 @@ async function loadInventory() {
                         <strong>Prezzo acquisto:</strong> €${parseFloat(item.prezzo_unitario).toFixed(2)} cad.
                     </div>
                     <div class="item-details">
-                        Acquistato da <strong>${item.acquistato_da}</strong> il ${item.data}
+                        Acquistato da <strong>${item.acquistato_da}</strong> il ${new Date(item.data).toLocaleDateString('it-IT', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+})}
                     </div>
                 </div>
             `).join('') || '<p>Nessun oggetto uso interno</p>';
