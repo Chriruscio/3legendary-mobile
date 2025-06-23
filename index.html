@@ -912,10 +912,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // FUNZIONI BASE
 function showTab(tabName) {
-    document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.form-section').forEach(section => {
+        section.classList.remove('active');
+    });
+    
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
     document.getElementById(tabName).classList.add('active');
     document.querySelector(`[onclick="showTab('${tabName}')"]`).classList.add('active');
+    
+    // Carica dati quando necessario
+    if (tabName === 'inventory') loadInventory();
+    if (tabName === 'sales') loadSalesItems();
+    if (tabName === 'reports') loadSalesReport();
+    if (tabName === 'cash') loadCashStatus();
+    if (tabName === 'balance') loadPersonalBalance();
 }
 
 function showMessage(text, type) {
@@ -948,7 +961,31 @@ document.getElementById('expenseForm').addEventListener('submit', async function
 });
 
 // STUB PER ALTRI FORM
-document.getElementById('salesForm')?.addEventListener('submit', (e) => { e.preventDefault(); showMessage('✅ Vendita registrata!', 'success'); });
+// FORM VENDITE - VERSIONE VERA
+document.getElementById('salesForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(this));
+    
+    showMessage('⏳ Registrando vendita...', 'success');
+    
+    try {
+        const result = await apiCall('addSale', data);
+        
+        if (result.success) {
+            showMessage(result.message, 'success');
+            this.reset();
+            const today = new Date().toISOString().split('T')[0];
+            document.querySelector('input[name="data_vendita"]').value = today;
+            
+            // Ricarica inventario dopo vendita
+            loadInventory();
+        } else {
+            showMessage('❌ ' + result.message, 'error');
+        }
+    } catch (error) {
+        showMessage('❌ Errore: ' + error.message, 'error');
+    }
+});
 document.getElementById('addCashForm')?.addEventListener('submit', (e) => { e.preventDefault(); showMessage('✅ Denaro aggiunto!', 'success'); });
 
 // CARICAMENTO SEZIONI
@@ -1014,8 +1051,27 @@ async function loadInventory() {
         showMessage('❌ Errore: ' + error.message, 'error');
     }
     
-    document.getElementById('inventoryLoading').style.display = 'none';
+   document.getElementById('inventoryLoading').style.display = 'none';
 }
+
+// CARICA OGGETTI VENDIBILI NEL DROPDOWN
+function loadSalesItems() {
+    apiCall('getInventory').then(result => {
+        const select = document.getElementById('salesItemSelect');
+        let options = '<option value="">Seleziona oggetto...</option>';
+        
+        if (result.success && result.data && result.data.daVendere) {
+            result.data.daVendere.forEach(item => {
+                if (item.quantita_disponibile > 0) {
+                    options += `<option value="${item.id}">${item.descrizione} (${item.quantita_disponibile} disp. - €${parseFloat(item.prezzo_unitario).toFixed(2)} cad.)</option>`;
+                }
+            });
+        }
+        
+        if (select) select.innerHTML = options;
+    });
+}
+
 function loadSalesReport() { 
     document.getElementById('reportsLoading').style.display = 'none';
     document.getElementById('reportsContent').innerHTML = '<p>Nessun report disponibile</p>'; 
