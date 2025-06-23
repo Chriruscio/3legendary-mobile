@@ -1232,15 +1232,15 @@ async function loadPersonalBalance() {
             
             const balanceHtml = `
                 <div class="balance-item">
-                    <span class="balance-name">🎮 Ciano</span>
+                    <span class="balance-name" onclick="showPersonDetails('Ciano')" style="cursor: pointer;">🎮 Ciano</span>
                     <span class="balance-amount ${balance.ciano.differenza >= 0 ? 'positive' : 'negative'}">${balance.ciano.stato}</span>
                 </div>
                 <div class="balance-item">
-                    <span class="balance-name">🔥 Alex</span>
+                    <span class="balance-name" onclick="showPersonDetails('Alex')" style="cursor: pointer;">🔥 Alex</span>
                     <span class="balance-amount ${balance.alex.differenza >= 0 ? 'positive' : 'negative'}">${balance.alex.stato}</span>
                 </div>
                 <div class="balance-item">
-                    <span class="balance-name">👑 King</span>
+                    <span class="balance-name" onclick="showPersonDetails('King')" style="cursor: pointer;">👑 King</span>
                     <span class="balance-amount ${balance.king.differenza >= 0 ? 'positive' : 'negative'}">${balance.king.stato}</span>
                 </div>
                 <div class="balance-item" style="border-top: 2px solid #FFD700; margin-top: 15px; padding-top: 15px;">
@@ -1275,6 +1275,50 @@ function showInventoryTab(type) {
     
     document.getElementById('inventario-' + type).classList.add('active');
 }
+    // MOSTRA DETTAGLI ACQUISTI PERSONA
+function showPersonDetails(persona) {
+    showMessage('⏳ Caricando dettagli...', 'success');
+    
+    apiCall('getPersonDetails', { persona: persona }).then(result => {
+        if (result.success && result.acquisti) {
+            let detailsHtml = `<h3 style="color: #FFD700; text-align: center; margin: 20px 0;">🛒 Acquisti di ${persona}</h3>`;
+            
+            result.acquisti.forEach(acquisto => {
+                detailsHtml += `
+                    <div class="item-card">
+                        <div class="item-header">
+                            <span class="item-name">${acquisto.descrizione}</span>
+                            <span class="profit-positive">€${parseFloat(acquisto.prezzo_totale).toFixed(2)}</span>
+                        </div>
+                        <div class="item-details">
+                            <strong>Quantità:</strong> ${acquisto.quantita}<br>
+                            <strong>Prezzo unitario:</strong> €${(parseFloat(acquisto.prezzo_totale) / parseInt(acquisto.quantita)).toFixed(2)}<br>
+                            <strong>Dove:</strong> ${acquisto.dove}<br>
+                            <strong>Data:</strong> ${new Date(acquisto.data).toLocaleDateString('it-IT', { 
+                                weekday: 'long', 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric' 
+                            })}<br>
+                            <strong>Tipo:</strong> ${acquisto.categoria}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            detailsHtml += `
+                <div style="text-align: center; margin: 20px 0;">
+                    <strong style="color: #FFD700;">Totale Speso: €${result.totale_speso.toFixed(2)}</strong>
+                </div>
+                <button class="btn" onclick="loadPersonalBalance()">🔙 Torna al Bilancio</button>
+            `;
+            
+            document.getElementById('balanceContent').innerHTML = detailsHtml;
+        } else {
+            showMessage('❌ Errore caricamento dettagli', 'error');
+        }
+    });
+}    
 </script>
 </body>
 </html>
