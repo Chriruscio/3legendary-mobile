@@ -2123,8 +2123,11 @@ function calculateUnitPrice() {
 
 // FORM SPESE CON CONTROLLO SIMILARITÀ
 document.getElementById('expenseForm').addEventListener('submit', async function(e) {
+    console.log('🚀 FORM SUBMIT TRIGGERED!'); // 🆕 DEBUG
     e.preventDefault();
-    const data = Object.fromEntries(new FormData(this));
+    console.log('✅ Form submission started'); // 🆕 DEBUG
+const data = Object.fromEntries(new FormData(this));
+    
 
 // 🆕 DEBUG: verifica che la categoria venga inviata
 console.log('📋 Categoria selezionata nel form:', data.categoria_prodotto);
