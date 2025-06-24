@@ -2153,8 +2153,46 @@ function closeCategoryModal() {
 }
 
 // 🔍 FUNZIONE RICERCA INVENTARIO COMPLETA
+// 🚀 VARIABILI PER OTTIMIZZAZIONE RICERCA
+let searchTimeout = null;
+let cachedInventoryData = null;
+let lastInventoryUpdate = 0;
+const CACHE_DURATION = 30000; // 30 secondi
+
+// 🔍 FUNZIONE RICERCA OTTIMIZZATA CON CACHE E DEBOUNCING
 function searchInventory(searchTerm) {
-    console.log('🔍 Ricerca inventario:', searchTerm);
+    // Cancella il timeout precedente (debouncing)
+    if (searchTimeout) {
+        clearTimeout(searchTimeout);
+    }
+    
+    // Attende 300ms dall'ultimo carattere digitato
+    searchTimeout = setTimeout(() => {
+        performSearch(searchTerm);
+    }, 300);
+}
+// 🔄 INVALIDA CACHE QUANDO NECESSARIO
+function invalidateInventoryCache() {
+    cachedInventoryData = null;
+    lastInventoryUpdate = 0;
+    console.log('🗑️ Cache inventario invalidata');
+}
+
+// 🎨 FUNZIONE PER EVIDENZIARE I TERMINI DI RICERCA (OTTIMIZZATA)
+function highlightSearchTerm(text, searchTerm) {
+    if (!text || !searchTerm) return text;
+    
+    const regex = new RegExp(`(${escapeRegex(searchTerm)})`, 'gi');
+    return text.replace(regex, '<mark style="background: #FFD700; color: #000; padding: 2px 4px; border-radius: 3px;">$1</mark>');
+}
+
+// 🛡️ ESCAPE CARATTERI SPECIALI REGEX
+function escapeRegex(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+// 🚀 ESEGUE LA RICERCA EFFETTIVA
+function performSearch(searchTerm) {
+    console.log('🔍 Ricerca ottimizzata:', searchTerm);
     
     // Se il campo di ricerca è vuoto, mostra tutti i prodotti della categoria corrente
     if (!searchTerm || searchTerm.trim() === '') {
@@ -2164,147 +2202,151 @@ function searchInventory(searchTerm) {
     
     const normalizedSearchTerm = searchTerm.toLowerCase().trim();
     
-    // Usa i dati dall'API
+    // 📦 USA CACHE SE DISPONIBILE E RECENTE
+    const now = Date.now();
+    if (cachedInventoryData && (now - lastInventoryUpdate) < CACHE_DURATION) {
+        console.log('⚡ Usando cache per ricerca veloce');
+        searchInCachedData(cachedInventoryData, normalizedSearchTerm, searchTerm);
+        return;
+    }
+    
+    // 📡 CARICA DATI FRESCHI DALL'API
+    console.log('📡 Caricando dati freschi...');
     apiCall('getInventory').then(result => {
         if (result.success && result.data) {
-            // Prima applica il filtro categoria, poi la ricerca
-            let filteredVendere = result.data.daVendere || [];
-            let filteredInterno = result.data.usoInterno || [];
+            // Aggiorna cache
+            cachedInventoryData = result.data;
+            lastInventoryUpdate = Date.now();
             
-            // Se non è "all", filtra prima per categoria
-            if (currentCategory !== 'all') {
-                filteredVendere = filteredVendere.filter(item => 
-                    (item.categoria_prodotto || 'generale') === currentCategory
-                );
-                filteredInterno = filteredInterno.filter(item => 
-                    (item.categoria_prodotto || 'generale') === currentCategory
-                );
-            }
-            
-            // Poi applica la ricerca per nome/descrizione/ID
-            filteredVendere = filteredVendere.filter(item => {
-                const itemName = (item.descrizione || '').toLowerCase();
-                const itemId = (item.id || '').toLowerCase();
-                const itemOwner = (item.acquistato_da || '').toLowerCase();
-                
-                return itemName.includes(normalizedSearchTerm) ||
-                       itemId.includes(normalizedSearchTerm) ||
-                       itemOwner.includes(normalizedSearchTerm);
-            });
-            
-            filteredInterno = filteredInterno.filter(item => {
-                const itemName = (item.descrizione || '').toLowerCase();
-                const itemId = (item.id || '').toLowerCase();
-                const itemOwner = (item.acquistato_da || '').toLowerCase();
-                
-                return itemName.includes(normalizedSearchTerm) ||
-                       itemId.includes(normalizedSearchTerm) ||
-                       itemOwner.includes(normalizedSearchTerm);
-            });
-            
-            console.log(`🔍 Trovati ${filteredVendere.length} prodotti da vendere e ${filteredInterno.length} uso interno`);
-            
-            // Genera HTML per risultati ricerca
-            const vendereHtml = filteredVendere.map(item => `
-                <div class="item-card" style="border-left: 4px solid #FFD700;">
-                    <div class="item-header">
-                        <span class="item-name">🔍 ${highlightSearchTerm(item.descrizione, searchTerm)}</span>
-                        <span class="item-status ${item.quantita_disponibile > 0 ? 'status-disponibile' : 'status-esaurito'}">
-                            ${item.quantita_disponibile > 0 ? '✅ DISPONIBILE' : '❌ ESAURITO'}
-                        </span>
-                    </div>
-                    <div class="item-info-grid">
-                        <div class="info-card">
-                            <div class="info-label">🆔 ID Prodotto</div>
-                            <div class="info-value">${item.id}</div>
-                        </div>
-                        <div class="info-card">
-                            <div class="info-label">📦 Quantità</div>
-                            <div class="info-value">${item.quantita_disponibile} / ${item.quantita_totale} disponibili</div>
-                        </div>
-                        <div class="info-card">
-                            <div class="info-label">💰 Prezzo Acquisto</div>
-                            <div class="info-value">€${parseFloat(item.prezzo_unitario).toFixed(2)} cad.</div>
-                        </div>
-                        <div class="info-card">
-                            <div class="info-label">👤 Acquistato da</div>
-                            <div class="info-value">${highlightSearchTerm(item.acquistato_da, searchTerm)}</div>
-                        </div>
-                        <div class="info-card">
-                            <div class="info-label">📅 Data Acquisto</div>
-                            <div class="info-value">${new Date(item.data).toLocaleDateString('it-IT')}</div>
-                        </div>
-                        <div class="info-card">
-                            <div class="info-label">📁 Categoria</div>
-                            <div class="info-value">${item.categoria_prodotto || 'generale'}</div>
-                        </div>
-                    </div>
-                    <div class="item-actions">
-                        <button class="action-btn btn-sell">📈 Vendi</button>
-                        <button class="action-btn btn-edit" onclick="editItem('${item.id}')">✏️ Modifica</button>
-                        <button class="action-btn btn-unify" onclick="selectForUnify('${item.id}', '${item.descrizione}')">🔗 Unifica</button>
-                        <button class="action-btn btn-delete" onclick="deleteItem('${item.id}')">🗑️ Elimina</button>
-                    </div>
-                </div>
-            `).join('') || `<p style="text-align: center; color: #ccc; padding: 40px;">🔍 Nessun risultato per "${searchTerm}"</p>`;
-            
-            const internoHtml = filteredInterno.map(item => `
-                <div class="item-card" style="border-left: 4px solid #FFD700;">
-                    <div class="item-header">
-                        <span class="item-name">🔍 ${highlightSearchTerm(item.descrizione, searchTerm)}</span>
-                        <span class="item-status status-uso">🔧 USO INTERNO</span>
-                    </div>
-                    <div class="item-info-grid">
-                        <div class="info-card">
-                            <div class="info-label">🆔 ID Prodotto</div>
-                            <div class="info-value">${item.id}</div>
-                        </div>
-                        <div class="info-card">
-                            <div class="info-label">📦 Quantità</div>
-                            <div class="info-value">${item.quantita_totale} pezzi</div>
-                        </div>
-                        <div class="info-card">
-                            <div class="info-label">💰 Prezzo Acquisto</div>
-                            <div class="info-value">€${parseFloat(item.prezzo_unitario).toFixed(2)} cad.</div>
-                        </div>
-                        <div class="info-card">
-                            <div class="info-label">👤 Acquistato da</div>
-                            <div class="info-value">${highlightSearchTerm(item.acquistato_da, searchTerm)}</div>
-                        </div>
-                        <div class="info-card">
-                            <div class="info-label">📅 Data Acquisto</div>
-                            <div class="info-value">${new Date(item.data).toLocaleDateString('it-IT')}</div>
-                        </div>
-                        <div class="info-card">
-                            <div class="info-label">📁 Categoria</div>
-                            <div class="info-value">${item.categoria_prodotto || 'generale'}</div>
-                        </div>
-                    </div>
-                    <div class="item-actions">
-                        <button class="action-btn btn-edit" onclick="editItem('${item.id}')">✏️ Modifica</button>
-                        <button class="action-btn btn-delete" onclick="deleteItem('${item.id}')">🗑️ Elimina</button>
-                    </div>
-                </div>
-            `).join('') || `<p style="text-align: center; color: #ccc; padding: 40px;">🔍 Nessun risultato uso interno per "${searchTerm}"</p>`;
-            
-            // Aggiorna l'HTML
-            document.getElementById('inventoryVendereContent').innerHTML = vendereHtml;
-            document.getElementById('inventoryInternoContent').innerHTML = internoHtml;
-            
-            console.log('✅ Ricerca completata!');
+            // Esegue ricerca sui dati freschi
+            searchInCachedData(result.data, normalizedSearchTerm, searchTerm);
         }
     }).catch(error => {
         console.error('❌ Errore nella ricerca:', error);
     });
 }
 
-// 🎨 FUNZIONE PER EVIDENZIARE I TERMINI DI RICERCA
+// ⚡ RICERCA NEI DATI IN CACHE (SUPER VELOCE)
+function searchInCachedData(data, normalizedSearchTerm, originalSearchTerm) {
+    // Prima applica il filtro categoria, poi la ricerca
+    let filteredVendere = data.daVendere || [];
+    let filteredInterno = data.usoInterno || [];
+    
+    // Se non è "all", filtra prima per categoria
+    if (currentCategory !== 'all') {
+        filteredVendere = filteredVendere.filter(item => 
+            (item.categoria_prodotto || 'generale') === currentCategory
+        );
+        filteredInterno = filteredInterno.filter(item => 
+            (item.categoria_prodotto || 'generale') === currentCategory
+        );
+    }
+    
+    // Poi applica la ricerca per nome/descrizione/ID
+    filteredVendere = filteredVendere.filter(item => {
+        const itemName = (item.descrizione || '').toLowerCase();
+        const itemId = (item.id || '').toLowerCase();
+        const itemOwner = (item.acquistato_da || '').toLowerCase();
+        
+        return itemName.includes(normalizedSearchTerm) ||
+               itemId.includes(normalizedSearchTerm) ||
+               itemOwner.includes(normalizedSearchTerm);
+    });
+    
+    filteredInterno = filteredInterno.filter(item => {
+        const itemName = (item.descrizione || '').toLowerCase();
+        const itemId = (item.id || '').toLowerCase();
+        const itemOwner = (item.acquistato_da || '').toLowerCase();
+        
+        return itemName.includes(normalizedSearchTerm) ||
+               itemId.includes(normalizedSearchTerm) ||
+               itemOwner.includes(normalizedSearchTerm);
+    });
+    
+    console.log(`⚡ Trovati istantaneamente: ${filteredVendere.length} da vendere, ${filteredInterno.length} uso interno`);
+    
+    // Genera HTML per risultati ricerca (versione ottimizzata)
+    const vendereHtml = generateSearchResultsHTML(filteredVendere, originalSearchTerm, 'vendere');
+    const internoHtml = generateSearchResultsHTML(filteredInterno, originalSearchTerm, 'interno');
+    
+    // Aggiorna l'HTML
+    document.getElementById('inventoryVendereContent').innerHTML = vendereHtml;
+    document.getElementById('inventoryInternoContent').innerHTML = internoHtml;
+    
+    console.log('⚡ Ricerca completata istantaneamente!');
+}
+
+// 🎨 GENERA HTML RISULTATI (FUNZIONE SEPARATA PER OTTIMIZZAZIONE)
+function generateSearchResultsHTML(items, searchTerm, type) {
+    if (!items || items.length === 0) {
+        return `<p style="text-align: center; color: #ccc; padding: 40px;">🔍 Nessun risultato ${type === 'interno' ? 'uso interno ' : ''}per "${searchTerm}"</p>`;
+    }
+    
+    return items.map(item => {
+        const isInterno = type === 'interno';
+        const icon = isInterno ? '🛡️' : '🎴';
+        const statusClass = isInterno ? 'status-uso' : (item.quantita_disponibile > 0 ? 'status-disponibile' : 'status-esaurito');
+        const statusText = isInterno ? '🔧 USO INTERNO' : (item.quantita_disponibile > 0 ? '✅ DISPONIBILE' : '❌ ESAURITO');
+        
+        return `
+            <div class="item-card" style="border-left: 4px solid #FFD700;">
+                <div class="item-header">
+                    <span class="item-name">${icon} ${highlightSearchTerm(item.descrizione, searchTerm)}</span>
+                    <span class="item-status ${statusClass}">${statusText}</span>
+                </div>
+                <div class="item-info-grid">
+                    <div class="info-card">
+                        <div class="info-label">🆔 ID</div>
+                        <div class="info-value">${item.id}</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">📦 Quantità</div>
+                        <div class="info-value">${isInterno ? item.quantita_totale + ' pezzi' : item.quantita_disponibile + ' / ' + item.quantita_totale + ' disp.'}</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">💰 Prezzo</div>
+                        <div class="info-value">€${parseFloat(item.prezzo_unitario).toFixed(2)}</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">👤 Acquirente</div>
+                        <div class="info-value">${highlightSearchTerm(item.acquistato_da, searchTerm)}</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">📁 Categoria</div>
+                        <div class="info-value">${item.categoria_prodotto || 'generale'}</div>
+                    </div>
+                </div>
+                <div class="item-actions">
+                    ${!isInterno ? '<button class="action-btn btn-sell">📈 Vendi</button>' : ''}
+                    <button class="action-btn btn-edit" onclick="editItem('${item.id}')">✏️ Modifica</button>
+                    ${!isInterno ? `<button class="action-btn btn-unify" onclick="selectForUnify('${item.id}', '${item.descrizione}')">🔗 Unifica</button>` : ''}
+                    <button class="action-btn btn-delete" onclick="deleteItem('${item.id}')">🗑️ Elimina</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// 🔄 INVALIDA CACHE QUANDO NECESSARIO
+function invalidateInventoryCache() {
+    cachedInventoryData = null;
+    lastInventoryUpdate = 0;
+    console.log('🗑️ Cache inventario invalidata');
+}
+
+// 🎨 FUNZIONE PER EVIDENZIARE I TERMINI DI RICERCA (OTTIMIZZATA)
 function highlightSearchTerm(text, searchTerm) {
     if (!text || !searchTerm) return text;
     
-    const regex = new RegExp(`(${searchTerm})`, 'gi');
+    const regex = new RegExp(`(${escapeRegex(searchTerm)})`, 'gi');
     return text.replace(regex, '<mark style="background: #FFD700; color: #000; padding: 2px 4px; border-radius: 3px;">$1</mark>');
 }
+
+// 🛡️ ESCAPE CARATTERI SPECIALI REGEX
+function escapeRegex(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 
 // 🔧 FUNZIONE FILTRI INVENTARIO COMPLETA
 function filterInventory(filterType) {
@@ -2564,8 +2606,10 @@ console.log('📊 Tutti i dati del form:', data);
     // Procedi con l'inserimento normale
     showMessage('⏳ Salvando spesa...', 'success');
     const result = await apiCall('addExpense', data);
-    showMessage(result.message, 'success');
-    this.reset();
+    if (result.success) {  // ← CERCA QUESTA RIGA
+        showMessage(result.message, 'success');
+        invalidateInventoryCache(); // ← AGGIUNGI QUESTA RIGA QUI
+        this.reset();
     document.querySelector('input[name="data"]').value = new Date().toISOString().split('T')[0];
     document.querySelector('input[name="quantita"]').value = 1;
     document.getElementById('pricePreview').style.display = 'none';
@@ -2584,6 +2628,7 @@ document.getElementById('salesForm')?.addEventListener('submit', async function(
         
         if (result.success) {
             showMessage(result.message, 'success');
+            invalidateInventoryCache();
             this.reset();
             const today = new Date().toISOString().split('T')[0];
             document.querySelector('input[name="data_vendita"]').value = today;
@@ -2646,6 +2691,7 @@ document.getElementById('internalPaymentForm')?.addEventListener('submit', async
 });
 // CARICAMENTO SEZIONI
 async function loadInventory() {
+    invalidateInventoryCache(); // ← AGGIUNGI QUESTA RIGA QUI
     document.getElementById('inventoryLoading').style.display = 'block';
     
     try {
