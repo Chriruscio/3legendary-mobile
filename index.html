@@ -1701,7 +1701,12 @@ function generateBalanceCard(nome, dati, totaleInvestito) {
     <span class="detail-label">🎯 SALDO FINALE:</span>
     <span class="detail-value" style="color: ${statusColor}; font-weight: bold; font-size: 1.1em;">${dati.reale >= 0 ? '+' : ''}€${dati.reale.toFixed(2)}</span>
 </div>
-${dati.reale !== 0 ? 'SEZIONE DESTINATARI TEMPORANEAMENTE DISABILITATA' : ''}
+${dati.reale !== 0 ? `
+<div class="detail-row" style="background: rgba(255,215,0,0.1); padding: 8px; border-radius: 5px; margin-top: 5px; border: 1px solid #FFD700;">
+    <span class="detail-label">${dati.reale > 0 ? '🎁 RICEVERAI DA:' : '💸 VERSA A:'}</span>
+    <span class="detail-value" style="font-weight: bold;">In calcolo...</span>
+</div>
+` : ''}
             </div>
         </div>
     `;
