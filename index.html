@@ -1688,8 +1688,8 @@ function generateBalanceCard(nome, dati, totaleInvestito) {
                 
                 <!-- 💸 SEZIONE PAGAMENTI E SALDO FINALE -->
                 <div class="detail-row">
-                    <span class="detail-label">💸 Pagamenti Fatti:</span>
-                    <span class="detail-value">€${dati.pagamenti.toFixed(2)}</span>
+                    <span class="detail-label">${dati.pagamenti > 0 ? '💰 SOLDI RICEVUTI dagli altri:' : dati.pagamenti < 0 ? '💸 SOLDI DATI agli altri:' : '💳 Nessun pagamento:'}</span>
+                    <span class="detail-value">${dati.pagamenti > 0 ? '+€' + dati.pagamenti.toFixed(2) : dati.pagamenti < 0 ? '€' + Math.abs(dati.pagamenti).toFixed(2) : '€0.00'}</span>
                 </div>
                 <div class="detail-row" style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 5px; margin-top: 8px;">
                     <span class="detail-label">🎯 SALDO FINALE:</span>
