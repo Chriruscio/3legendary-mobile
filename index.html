@@ -3068,9 +3068,9 @@ document.getElementById('availableItems').textContent = availableItems;
 document.getElementById('totalValue').textContent = `€${totalValue.toFixed(2)}`;  // ← 2 decimali
 document.getElementById('soldValue').textContent = `€${soldValue.toFixed(2)}`;    // ← 2 decimali
 }   
-// AGGIORNA CONTATORI CATEGORIE
+// 🔧 FUNZIONE CORRETTA PER AGGIORNARE CONTATORI CATEGORIE
 function updateCategoryCounters() {
-    // Resetta contatori
+    // Resetta tutti i contatori
     Object.keys(categories).forEach(categoryId => {
         if (categories[categoryId]) {
             categories[categoryId].count = 0;
@@ -3078,27 +3078,67 @@ function updateCategoryCounters() {
         }
     });
     
-    // Conta prodotti dall'inventario attuale
-    const allItems = [...(document.querySelectorAll('#inventoryVendereContent .item-card')), 
-                      ...(document.querySelectorAll('#inventoryInternoContent .item-card'))];
+    // 📊 USA I DATI DALL'API INVECE CHE DAL DOM
+    apiCall('getInventory').then(result => {
+        if (result.success && result.data) {
+            // Conta tutti gli oggetti (da vendere + uso interno)
+            const allItems = [...(result.data.daVendere || []), ...(result.data.usoInterno || [])];
+            
+            console.log('🔍 Oggetti trovati per conteggio:', allItems.length);
+            
+            // Conta per ogni categoria
+            allItems.forEach(item => {
+                const itemCategory = item.categoria || 'generale'; // Dalla colonna categoria del database
+                const itemValue = (item.quantita_disponibile || 0) * (item.prezzo_unitario || 0);
+                
+                console.log(`📦 Oggetto: ${item.descrizione} - Categoria: ${itemCategory} - Valore: €${itemValue.toFixed(2)}`);
+                
+                // Aggiungi a categoria specifica
+                if (categories[itemCategory]) {
+                    categories[itemCategory].count++;
+                    categories[itemCategory].value += itemValue;
+                }
+                
+                // Aggiungi sempre a "all"
+                if (categories['all']) {
+                    categories['all'].count++;
+                    categories['all'].value += itemValue;
+                }
+            });
+            
+            console.log('📊 Contatori aggiornati:', categories);
+            
+            // Aggiorna UI con i nuovi contatori
+            updateCategoriesUI();
+        }
+    }).catch(error => {
+        console.error('❌ Errore aggiornamento contatori:', error);
+    });
+}
+  // 🔍 FUNZIONE DEBUG PER VEDERE COSA STA SUCCEDENDO
+function debugCategories() {
+    console.log('🔍 === DEBUG CATEGORIE ===');
     
-    allItems.forEach(itemCard => {
-        const itemName = itemCard.querySelector('.item-name')?.textContent || '';
-        
-        // Trova categoria basata sul nome (temporaneo)
-        if (itemName.includes('pack') || itemName.includes('Pack')) {
-            if (categories['pack']) categories['pack'].count++;
-        } else if (itemName.includes('Booster')) {
-            if (categories['booster-packs']) categories['booster-packs'].count++;
-        } else if (itemName.includes('Elite') || itemName.includes('ETB')) {
-            if (categories['etb']) categories['etb'].count++;
+    apiCall('getInventory').then(result => {
+        if (result.success && result.data) {
+            console.log('📦 Dati inventario ricevuti:', result.data);
+            
+            const allItems = [...(result.data.daVendere || []), ...(result.data.usoInterno || [])];
+            console.log(`📊 Totale oggetti: ${allItems.length}`);
+            
+            allItems.forEach((item, index) => {
+                console.log(`${index + 1}. Nome: "${item.descrizione}" | Categoria: "${item.categoria}" | Disponibili: ${item.quantita_disponibile} | Prezzo: €${item.prezzo_unitario}`);
+            });
+            
+            console.log('🏷️ Categorie disponibili:', Object.keys(categories));
+        } else {
+            console.error('❌ Errore caricamento inventario:', result.message);
         }
     });
-    
-    // Aggiorna UI categorie
-    updateCategoriesUI();
-    console.log('🔢 Contatori categorie aggiornati');
-} 
+}
+
+// Chiama questa funzione dalla console del browser per fare debug
+// debugCategories();      
 </script>
 </body>
 </html>
