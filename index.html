@@ -1570,6 +1570,16 @@
     <script>
         console.log('🔄 JavaScript INIZIATO!');
 alert('JavaScript funziona!');
+        // 🆕 VERIFICA SE IL FORM ESISTE
+setTimeout(() => {
+    const form = document.getElementById('expenseForm');
+    console.log('📋 Form trovato:', form);
+    if (form) {
+        console.log('✅ Form esiste!');
+    } else {
+        console.log('❌ Form NON trovato!');
+    }
+}, 1000);
 // 🚀 CONFIGURAZIONE API
 const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbwc17XK8CD4q2wRkgMGYK2_jB4MpiHrf06eIF28RMYebUbDj_ozYQOt6-dhzJdAlvt-AQ/exec';
 
