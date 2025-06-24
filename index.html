@@ -1671,7 +1671,7 @@ function generateBalanceCard(nome, dati, totaleInvestito) {
     return `
         <div class="balance-item-new">
             <div class="balance-header">
-                <span class="balance-name-new" onclick="showPersonDetails('${nome.replace(/🎮|🔥|👑/g, '').trim()}')">${nome}</span>
+                <span class="balance-name-new" onclick="showPersonDetails('${nome.replace(/[🎮🔥👑]/g, '').trim()}')">${nome}</span>
                 <span class="balance-status ${statusClass}">${dati.stato}</span>
             </div>
             <div class="balance-details">
