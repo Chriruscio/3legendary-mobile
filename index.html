@@ -610,7 +610,454 @@
                 font-size: 16px; /* Prevents zoom on iOS */
             }
         }
-        
+        /* 🎨 AGGIUNGI QUESTI STILI AL TUO CSS ESISTENTE */
+
+/* SISTEMA PREZZO DOPPIO */
+.dual-price-container {
+    background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(139,0,0,0.15));
+    border: 2px solid #FFD700;
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+    position: relative;
+}
+
+.dual-price-header {
+    color: #FFD700;
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.price-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.price-field {
+    position: relative;
+}
+
+.price-field input {
+    padding-right: 45px;
+    font-size: 18px;
+    font-weight: bold;
+    background: rgba(0,0,0,0.9);
+}
+
+.currency {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #FFD700;
+    font-weight: bold;
+    pointer-events: none;
+}
+
+.price-preview {
+    background: rgba(0,0,0,0.6);
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+    border: 1px solid rgba(255,215,0,0.3);
+}
+
+.preview-text {
+    font-size: 1.1em;
+    color: #90EE90;
+    font-weight: bold;
+    line-height: 1.4;
+}
+
+.preview-detail {
+    font-size: 0.9em;
+    color: #ccc;
+    margin-top: 5px;
+}
+
+.sync-indicator {
+    position: absolute;
+    top: -10px;
+    right: 20px;
+    background: #FFD700;
+    color: #000;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+/* GESTIONE CATEGORIE INVENTARIO */
+.categories-section {
+    background: rgba(139,0,0,0.4);
+    padding: 20px;
+    border-bottom: 2px solid #8B0000;
+    border-radius: 15px 15px 0 0;
+    margin-bottom: 0;
+}
+
+.categories-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.categories-title {
+    color: #FFD700;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.add-category-btn {
+    background: linear-gradient(135deg, #006400, #32CD32);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.9em;
+}
+
+.add-category-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(50,205,50,0.4);
+}
+
+.categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.category-card {
+    background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(255,215,0,0.1));
+    border: 2px solid #FFD700;
+    border-radius: 12px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+}
+
+.category-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(255,215,0,0.4);
+    border-color: #FFA500;
+}
+
+.category-card.active {
+    background: linear-gradient(135deg, #8B0000, #FF0000);
+    border-color: #FF0000;
+    transform: scale(1.02);
+}
+
+.category-icon {
+    font-size: 1.8em;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.category-name {
+    font-weight: bold;
+    color: #FFD700;
+    margin-bottom: 4px;
+    font-size: 0.9em;
+}
+
+.category-count {
+    font-size: 0.8em;
+    color: #ccc;
+    margin-bottom: 6px;
+}
+
+.category-value {
+    font-size: 0.75em;
+    color: #90EE90;
+    font-weight: bold;
+}
+
+.category-actions {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: flex;
+    gap: 3px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.category-card:hover .category-actions {
+    opacity: 1;
+}
+
+.category-action-btn {
+    background: rgba(0,0,0,0.8);
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.7em;
+}
+
+.category-action-btn:hover {
+    transform: scale(1.1);
+}
+
+.btn-edit-category {
+    color: #FFA500;
+}
+
+.btn-delete-category {
+    color: #FF4444;
+}
+
+/* INVENTARIO MIGLIORATO */
+.inventory-controls {
+    background: rgba(0,0,0,0.3);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.search-section {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.search-input {
+    padding: 12px 15px;
+    border: 2px solid #8B0000;
+    border-radius: 10px;
+    background: rgba(0,0,0,0.8);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #FF0000;
+    box-shadow: 0 0 15px rgba(255,0,0,0.4);
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.8em;
+}
+
+.filter-btn.active {
+    background: linear-gradient(135deg, #8B0000, #FF0000);
+    color: white;
+    transform: scale(1.05);
+}
+
+.filter-btn:not(.active) {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+}
+
+.filter-btn:hover:not(.active) {
+    background: rgba(255,255,255,0.3);
+    transform: scale(1.02);
+}
+
+.inventory-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.stat-box {
+    background: rgba(0,0,0,0.6);
+    padding: 12px;
+    border-radius: 10px;
+    border: 2px solid #FFD700;
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 1.4em;
+    color: #FFD700;
+    font-weight: bold;
+    display: block;
+}
+
+.stat-label {
+    font-size: 0.8em;
+    opacity: 0.9;
+    margin-top: 4px;
+}
+
+.item-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.info-card {
+    background: rgba(255,215,0,0.1);
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #FFD700;
+}
+
+.info-label {
+    color: #FFD700;
+    font-weight: bold;
+    font-size: 0.8em;
+    margin-bottom: 4px;
+}
+
+.info-value {
+    color: #fff;
+    font-size: 0.95em;
+    font-weight: bold;
+}
+
+.movements-section {
+    margin-top: 15px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.movements-header {
+    background: rgba(255,215,0,0.2);
+    padding: 8px 12px;
+    border-bottom: 1px solid #FFD700;
+}
+
+.movements-title {
+    color: #FFD700;
+    font-weight: bold;
+    font-size: 0.85em;
+}
+
+.movement-item {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8em;
+}
+
+.movement-item:last-child {
+    border-bottom: none;
+}
+
+.movement-in {
+    border-left: 3px solid #006400;
+}
+
+.movement-out {
+    border-left: 3px solid #8B0000;
+}
+
+.movement-date {
+    color: #ccc;
+    font-size: 0.75em;
+}
+
+.movement-amount {
+    font-weight: bold;
+}
+
+.amount-positive {
+    color: #90EE90;
+}
+
+.amount-negative {
+    color: #FFB6C1;
+}
+
+.action-btn {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.8em;
+    flex: 1;
+    min-width: 100px;
+}
+
+.btn-edit {
+    background: linear-gradient(135deg, #FFA500, #FF8C00);
+    color: white;
+}
+
+.btn-delete {
+    background: linear-gradient(135deg, #8B0000, #DC143C);
+    color: white;
+}
+
+.btn-sell {
+    background: linear-gradient(135deg, #006400, #32CD32);
+    color: white;
+}
+
+.btn-unify {
+    background: linear-gradient(135deg, #4169E1, #6495ED);
+    color: white;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+    .price-fields {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .categories-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .item-info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .search-section {
+        grid-template-columns: 1fr;
+    }
+}
         /* PWA STYLES */
         @media (display-mode: standalone) {
             .container {
@@ -768,16 +1215,34 @@
                             <input type="text" name="descrizione" placeholder="Es: Booster Darkness Ablaze" required>
                         </div>
                         
-                        <div class="two-column">
-                            <div class="form-group">
-                                <label>📦 Quantità:</label>
-                                <input type="number" name="quantita" min="1" value="1" required onchange="calculateUnitPrice()">
-                            </div>
-                            <div class="form-group">
-                                <label>💶 Prezzo TOTALE €:</label>
-                                <input type="number" name="prezzo_totale" step="0.01" placeholder="0.00" required onchange="calculateUnitPrice()">
-                            </div>
-                        </div>
+                        <div class="form-group">
+    <label>📦 Quantità:</label>
+    <input type="number" name="quantita" min="1" value="1" required onchange="calculateExpensePrice()">
+</div>
+
+<!-- SISTEMA PREZZO DOPPIO -->
+<div class="dual-price-container">
+    <div class="sync-indicator">🔄 SYNC</div>
+    <div class="dual-price-header">💰 Sistema Prezzo Intelligente</div>
+    
+    <div class="price-fields">
+        <div class="price-field">
+            <label style="color: #FFD700; margin-bottom: 8px; display: block; font-size: 0.9em;">💵 Prezzo TOTALE</label>
+            <input type="number" id="expensePriceTotal" name="prezzo_totale" step="0.01" placeholder="0.00" onchange="calculateExpenseFromTotal()" oninput="calculateExpenseFromTotal()">
+            <span class="currency">€</span>
+        </div>
+        <div class="price-field">
+            <label style="color: #FFD700; margin-bottom: 8px; display: block; font-size: 0.9em;">💎 Prezzo SINGOLO</label>
+            <input type="number" id="expensePriceSingle" step="0.01" placeholder="0.00" onchange="calculateExpenseFromSingle()" oninput="calculateExpenseFromSingle()">
+            <span class="currency">€</span>
+        </div>
+    </div>
+    
+    <div class="price-preview">
+        <div class="preview-text" id="expensePreview">Inserisci quantità e prezzo per vedere l'anteprima</div>
+        <div class="preview-detail" id="expenseDetail"></div>
+    </div>
+</div>
                         
                         <div class="form-group">
                             <label>🏪 Dove:</label>
@@ -812,7 +1277,83 @@
             <div id="inventory" class="form-section">
                 <div class="section">
                     <h2>📦 Inventario</h2>
-                    
+                    <!-- GESTIONE CATEGORIE -->
+<div class="categories-section">
+    <div class="categories-header">
+        <div class="categories-title">📁 Categorie Prodotti</div>
+        <button class="add-category-btn" onclick="showAddCategoryModal()">➕ Nuova Categoria</button>
+    </div>
+    
+    <div class="categories-grid">
+        <div class="category-card active" onclick="selectCategory('all')">
+            <div class="category-icon">🌟</div>
+            <div class="category-name">Tutti i Prodotti</div>
+            <div class="category-count">-- articoli</div>
+            <div class="category-value">€-- totale</div>
+        </div>
+        
+        <div class="category-card" onclick="selectCategory('booster-packs')">
+            <div class="category-icon">🎴</div>
+            <div class="category-name">Booster Packs</div>
+            <div class="category-count">-- articoli</div>
+            <div class="category-value">€-- totale</div>
+            <div class="category-actions">
+                <button class="category-action-btn btn-edit-category" onclick="editCategory('booster-packs', event)">✏️</button>
+                <button class="category-action-btn btn-delete-category" onclick="deleteCategory('booster-packs', event)">🗑️</button>
+            </div>
+        </div>
+        
+        <div class="category-card" onclick="selectCategory('etb')">
+            <div class="category-icon">📦</div>
+            <div class="category-name">Elite Trainer Box</div>
+            <div class="category-count">-- articoli</div>
+            <div class="category-value">€-- totale</div>
+            <div class="category-actions">
+                <button class="category-action-btn btn-edit-category" onclick="editCategory('etb', event)">✏️</button>
+                <button class="category-action-btn btn-delete-category" onclick="deleteCategory('etb', event)">🗑️</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- BREADCRUMB NAVIGAZIONE -->
+    <div style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px; font-size: 0.9em;">
+        <span style="color: #FFD700;">📍 Visualizzando:</span>
+        <span id="currentCategoryBreadcrumb" style="color: #fff; font-weight: bold; margin-left: 10px;">🌟 Tutti i Prodotti</span>
+    </div>
+</div>
+
+<!-- CONTROLLI INVENTARIO -->
+<div class="inventory-controls">
+    <div class="search-section">
+        <input type="text" class="search-input" placeholder="🔍 Cerca prodotti, codici..." onkeyup="searchInventory(this.value)">
+        <button class="filter-btn active" onclick="refreshInventory()">🔄 Aggiorna</button>
+    </div>
+    <div class="filter-buttons">
+        <button class="filter-btn active" onclick="filterInventory('all')">🌟 Tutti</button>
+        <button class="filter-btn" onclick="filterInventory('disponibili')">✅ Disponibili</button>
+        <button class="filter-btn" onclick="filterInventory('esauriti')">❌ Esauriti</button>
+    </div>
+</div>
+
+<!-- STATISTICHE INVENTARIO -->
+<div class="inventory-stats">
+    <div class="stat-box">
+        <span class="stat-number" id="totalItems">--</span>
+        <div class="stat-label">Articoli Totali</div>
+    </div>
+    <div class="stat-box">
+        <span class="stat-number" id="availableItems">--</span>
+        <div class="stat-label">Disponibili</div>
+    </div>
+    <div class="stat-box">
+        <span class="stat-number" id="totalValue">€--</span>
+        <div class="stat-label">Valore Magazzino</div>
+    </div>
+    <div class="stat-box">
+        <span class="stat-number" id="soldValue">€--</span>
+        <div class="stat-label">Venduto</div>
+    </div>
+</div>
                     <div class="inventory-tabs">
                         <div class="inventory-tab active" onclick="showInventoryTab('vendere')">💰 Da Vendere</div>
                         <div class="inventory-tab" onclick="showInventoryTab('interno')">🔧 Uso Interno</div>
@@ -853,16 +1394,34 @@
                             <span id="itemDetails"></span>
                         </div>
                         
-                        <div class="two-column">
-                            <div class="form-group">
-                                <label>📦 Quantità:</label>
-                                <input type="number" name="quantita_vendita" min="1" required onchange="calculateSaleProfit()">
-                            </div>
-                            <div class="form-group">
-                                <label>💶 Prezzo TOTALE €:</label>
-                                <input type="number" name="prezzo_totale_vendita" step="0.01" required onchange="calculateSaleProfit()">
-                            </div>
-                        </div>
+                        <div class="form-group">
+    <label>📦 Quantità da vendere:</label>
+    <input type="number" name="quantita_vendita" min="1" required onchange="calculateSalePrice()">
+</div>
+
+<!-- SISTEMA PREZZO DOPPIO VENDITE -->
+<div class="dual-price-container">
+    <div class="sync-indicator">🔄 SYNC</div>
+    <div class="dual-price-header">💰 Prezzo di Vendita</div>
+    
+    <div class="price-fields">
+        <div class="price-field">
+            <label style="color: #FFD700; margin-bottom: 8px; display: block; font-size: 0.9em;">💵 Ricavo TOTALE</label>
+            <input type="number" id="salePriceTotal" name="prezzo_totale_vendita" step="0.01" placeholder="0.00" onchange="calculateSaleFromTotal()" oninput="calculateSaleFromTotal()">
+            <span class="currency">€</span>
+        </div>
+        <div class="price-field">
+            <label style="color: #FFD700; margin-bottom: 8px; display: block; font-size: 0.9em;">💎 Prezzo SINGOLO</label>
+            <input type="number" id="salePriceSingle" step="0.01" placeholder="0.00" onchange="calculateSaleFromSingle()" oninput="calculateSaleFromSingle()">
+            <span class="currency">€</span>
+        </div>
+    </div>
+    
+    <div class="price-preview">
+        <div class="preview-text" id="salePreview">Seleziona prodotto e inserisci quantità</div>
+        <div class="preview-detail" id="saleDetail"></div>
+    </div>
+</div>
                         
                         <div class="form-group">
                             <label>👤 Venduto a:</label>
@@ -1039,7 +1598,384 @@ document.addEventListener('DOMContentLoaded', function() {
     const today = new Date().toISOString().split('T')[0];
     document.querySelectorAll('input[type="date"]').forEach(input => { if (!input.value) input.value = today; });
 });
+// ========== SISTEMA PREZZO DOPPIO SPESE ==========
+let isCalculatingExpense = false;
 
+function calculateExpenseFromTotal() {
+    if (isCalculatingExpense) return;
+    isCalculatingExpense = true;
+    
+    const quantity = parseInt(document.querySelector('input[name="quantita"]').value) || 0;
+    const totalPrice = parseFloat(document.getElementById('expensePriceTotal').value) || 0;
+    
+    if (quantity > 0 && totalPrice > 0) {
+        const singlePrice = totalPrice / quantity;
+        document.getElementById('expensePriceSingle').value = singlePrice.toFixed(2);
+        updateExpensePreview(quantity, totalPrice, singlePrice);
+    } else {
+        clearExpensePreview();
+    }
+    
+    isCalculatingExpense = false;
+}
+
+function calculateExpenseFromSingle() {
+    if (isCalculatingExpense) return;
+    isCalculatingExpense = true;
+    
+    const quantity = parseInt(document.querySelector('input[name="quantita"]').value) || 0;
+    const singlePrice = parseFloat(document.getElementById('expensePriceSingle').value) || 0;
+    
+    if (quantity > 0 && singlePrice > 0) {
+        const totalPrice = quantity * singlePrice;
+        document.getElementById('expensePriceTotal').value = totalPrice.toFixed(2);
+        updateExpensePreview(quantity, totalPrice, singlePrice);
+    } else {
+        clearExpensePreview();
+    }
+    
+    isCalculatingExpense = false;
+}
+
+function calculateExpensePrice() {
+    // Ricalcola quando cambia la quantità
+    const totalPrice = parseFloat(document.getElementById('expensePriceTotal').value) || 0;
+    if (totalPrice > 0) {
+        calculateExpenseFromTotal();
+    } else {
+        const singlePrice = parseFloat(document.getElementById('expensePriceSingle').value) || 0;
+        if (singlePrice > 0) {
+            calculateExpenseFromSingle();
+        }
+    }
+}
+
+function updateExpensePreview(quantity, totalPrice, singlePrice) {
+    document.getElementById('expensePreview').innerHTML = 
+        `💰 <strong>${quantity}x</strong> a <strong>€${singlePrice.toFixed(2)}</strong> cadauno = <strong>€${totalPrice.toFixed(2)}</strong> totale`;
+    document.getElementById('expenseDetail').innerHTML = 
+        `💡 Investimento: €${totalPrice.toFixed(2)} • Costo unitario: €${singlePrice.toFixed(2)}`;
+}
+
+function clearExpensePreview() {
+    document.getElementById('expensePreview').innerHTML = 'Inserisci quantità e prezzo per vedere l\'anteprima';
+    document.getElementById('expenseDetail').innerHTML = '';
+}
+
+// ========== SISTEMA PREZZO DOPPIO VENDITE ==========
+let isCalculatingSale = false;
+let currentItemPrice = 0;
+
+function calculateSaleFromTotal() {
+    if (isCalculatingSale) return;
+    isCalculatingSale = true;
+    
+    const quantity = parseInt(document.querySelector('input[name="quantita_vendita"]').value) || 0;
+    const totalPrice = parseFloat(document.getElementById('salePriceTotal').value) || 0;
+    
+    if (quantity > 0 && totalPrice > 0) {
+        const singlePrice = totalPrice / quantity;
+        document.getElementById('salePriceSingle').value = singlePrice.toFixed(2);
+        updateSalePreview(quantity, totalPrice, singlePrice);
+    } else {
+        clearSalePreview();
+    }
+    
+    isCalculatingSale = false;
+}
+
+function calculateSaleFromSingle() {
+    if (isCalculatingSale) return;
+    isCalculatingSale = true;
+    
+    const quantity = parseInt(document.querySelector('input[name="quantita_vendita"]').value) || 0;
+    const singlePrice = parseFloat(document.getElementById('salePriceSingle').value) || 0;
+    
+    if (quantity > 0 && singlePrice > 0) {
+        const totalPrice = quantity * singlePrice;
+        document.getElementById('salePriceTotal').value = totalPrice.toFixed(2);
+        updateSalePreview(quantity, totalPrice, singlePrice);
+    } else {
+        clearSalePreview();
+    }
+    
+    isCalculatingSale = false;
+}
+
+function calculateSalePrice() {
+    // Ricalcola quando cambia la quantità
+    const totalPrice = parseFloat(document.getElementById('salePriceTotal').value) || 0;
+    if (totalPrice > 0) {
+        calculateSaleFromTotal();
+    } else {
+        const singlePrice = parseFloat(document.getElementById('salePriceSingle').value) || 0;
+        if (singlePrice > 0) {
+            calculateSaleFromSingle();
+        }
+    }
+}
+
+function updateSalePreview(quantity, totalSalePrice, singleSalePrice) {
+    if (currentItemPrice > 0) {
+        const totalCost = quantity * currentItemPrice;
+        const totalProfit = totalSalePrice - totalCost;
+        const profitPercentage = totalCost > 0 ? ((totalProfit / totalCost) * 100).toFixed(1) : 0;
+        
+        const profitColor = totalProfit >= 0 ? '#90EE90' : '#FFB6C1';
+        const profitSign = totalProfit >= 0 ? '+' : '';
+        
+        document.getElementById('salePreview').innerHTML = 
+            `📈 <strong>${quantity}x</strong> a <strong>€${singleSalePrice.toFixed(2)}</strong> = <strong>€${totalSalePrice.toFixed(2)}</strong> ricavo`;
+        
+        document.getElementById('saleDetail').innerHTML = 
+            `💰 Costo: €${totalCost.toFixed(2)} • ` +
+            `<span style="color: ${profitColor}">Profitto: <strong>${profitSign}€${totalProfit.toFixed(2)}</strong> (${profitSign}${profitPercentage}%)</span><br>` +
+            `💎 Profitto per socio: €${(totalProfit / 3).toFixed(2)} cadauno`;
+    } else {
+        document.getElementById('salePreview').innerHTML = 
+            `📈 <strong>${quantity}x</strong> a <strong>€${singleSalePrice.toFixed(2)}</strong> = <strong>€${totalSalePrice.toFixed(2)}</strong> ricavo`;
+        document.getElementById('saleDetail').innerHTML = 
+            `⚠️ Seleziona un prodotto per calcolare il profitto`;
+    }
+}
+
+function clearSalePreview() {
+    document.getElementById('salePreview').innerHTML = 'Seleziona prodotto e inserisci quantità';
+    document.getElementById('saleDetail').innerHTML = '';
+}
+
+// ========== GESTIONE CATEGORIE ==========
+let currentCategory = 'all';
+let categories = {
+    'all': { name: 'Tutti i Prodotti', icon: '🌟', count: 0, value: 0 },
+    'booster-packs': { name: 'Booster Packs', icon: '🎴', count: 0, value: 0 },
+    'etb': { name: 'Elite Trainer Box', icon: '📦', count: 0, value: 0 }
+};
+
+function selectCategory(categoryId) {
+    currentCategory = categoryId;
+    
+    // Aggiorna UI
+    document.querySelectorAll('.category-card').forEach(card => {
+        card.classList.remove('active');
+    });
+    
+    const selectedCard = document.querySelector(`[onclick="selectCategory('${categoryId}')"]`);
+    if (selectedCard) {
+        selectedCard.classList.add('active');
+    }
+    
+    // Aggiorna breadcrumb
+    const category = categories[categoryId];
+    if (category) {
+        document.getElementById('currentCategoryBreadcrumb').textContent = `${category.icon} ${category.name}`;
+    }
+    
+    // Filtra prodotti
+    filterProductsByCategory(categoryId);
+    
+    console.log('Categoria selezionata:', categoryId);
+}
+
+function filterProductsByCategory(categoryId) {
+    // Qui andrà la logica di filtro quando collegato all'inventario reale
+    console.log('Filtrando per categoria:', categoryId);
+}
+
+function showAddCategoryModal() {
+    const modalHtml = `
+        <div id="categoryModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;">
+            <div style="background: #1a1a1a; padding: 30px; border-radius: 15px; max-width: 500px; width: 100%; border: 3px solid #FFD700;">
+                <h3 style="color: #FFD700; text-align: center; margin-bottom: 20px; font-size: 1.4em;">➕ Nuova Categoria</h3>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="color: #FFD700; display: block; margin-bottom: 8px; font-weight: bold;">📝 Nome Categoria:</label>
+                    <input type="text" id="categoryName" placeholder="Es: Bundle Promozionali" style="width: 100%; padding: 12px; border: 2px solid #8B0000; border-radius: 8px; background: #000; color: #fff; font-size: 16px;">
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="color: #FFD700; display: block; margin-bottom: 8px; font-weight: bold;">🎨 Icona Categoria:</label>
+                    <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px;">
+                        ${['🎴', '📦', '🥫', '🛡️', '🎯', '⚡', '🌟', '🔥', '💎', '🏆', '🎁', '🎪'].map(icon => 
+                            `<button onclick="selectIcon('${icon}')" style="padding: 10px; border: 2px solid #8B0000; border-radius: 8px; background: #000; color: #fff; font-size: 1.2em; cursor: pointer;" class="icon-btn">${icon}</button>`
+                        ).join('')}
+                    </div>
+                    <input type="hidden" id="selectedIcon" value="🎴">
+                </div>
+                
+                <div style="display: flex; gap: 15px;">
+                    <button onclick="createCategory()" style="flex: 1; padding: 15px; background: linear-gradient(135deg, #006400, #32CD32); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1em; cursor: pointer;">✅ Crea Categoria</button>
+                    <button onclick="closeCategoryModal()" style="flex: 1; padding: 15px; background: #666; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1em; cursor: pointer;">❌ Annulla</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function selectIcon(icon) {
+    document.getElementById('selectedIcon').value = icon;
+    document.querySelectorAll('.icon-btn').forEach(btn => {
+        btn.style.borderColor = '#8B0000';
+        btn.style.background = '#000';
+    });
+    event.target.style.borderColor = '#FFD700';
+    event.target.style.background = '#8B0000';
+}
+
+function createCategory() {
+    const name = document.getElementById('categoryName').value.trim();
+    const icon = document.getElementById('selectedIcon').value;
+    
+    if (!name) {
+        alert('❌ Inserisci il nome della categoria!');
+        return;
+    }
+    
+    // Crea ID categoria
+    const categoryId = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+    
+    if (categories[categoryId]) {
+        alert('❌ Categoria già esistente!');
+        return;
+    }
+    
+    // Aggiungi categoria
+    categories[categoryId] = {
+        name: name,
+        icon: icon,
+        count: 0,
+        value: 0
+    };
+    
+    // Aggiorna UI
+    addCategoryToGrid(categoryId, categories[categoryId]);
+    closeCategoryModal();
+    
+    alert(`✅ Categoria "${name}" creata con successo!`);
+    console.log('Nuova categoria:', categories[categoryId]);
+}
+
+function addCategoryToGrid(categoryId, category) {
+    const grid = document.querySelector('.categories-grid');
+    const categoryHtml = `
+        <div class="category-card" onclick="selectCategory('${categoryId}')">
+            <div class="category-icon">${category.icon}</div>
+            <div class="category-name">${category.name}</div>
+            <div class="category-count">${category.count} articoli</div>
+            <div class="category-value">€${category.value} totale</div>
+            <div class="category-actions">
+                <button class="category-action-btn btn-edit-category" onclick="editCategory('${categoryId}', event)">✏️</button>
+                <button class="category-action-btn btn-delete-category" onclick="deleteCategory('${categoryId}', event)">🗑️</button>
+            </div>
+        </div>
+    `;
+    grid.insertAdjacentHTML('beforeend', categoryHtml);
+}
+
+function editCategory(categoryId, event) {
+    event.stopPropagation();
+    const category = categories[categoryId];
+    
+    const newName = prompt(`✏️ Modifica nome categoria:\n\nAttuale: "${category.name}"`, category.name);
+    if (newName && newName.trim() && newName !== category.name) {
+        category.name = newName.trim();
+        
+        // Aggiorna UI
+        const card = document.querySelector(`[onclick="selectCategory('${categoryId}')"]`);
+        if (card) {
+            card.querySelector('.category-name').textContent = category.name;
+        }
+        
+        alert(`✅ Categoria rinominata in "${category.name}"!`);
+        console.log('Categoria modificata:', categoryId, category);
+    }
+}
+
+function deleteCategory(categoryId, event) {
+    event.stopPropagation();
+    
+    if (categoryId === 'all') {
+        alert('❌ Non puoi eliminare la categoria "Tutti i Prodotti"!');
+        return;
+    }
+    
+    const category = categories[categoryId];
+    if (confirm(`🗑️ Eliminare la categoria "${category.name}"?\n\n⚠️ I prodotti verranno spostati in "Senza Categoria"`)) {
+        // Rimuovi categoria
+        delete categories[categoryId];
+        
+        // Rimuovi dalla UI
+        const card = document.querySelector(`[onclick="selectCategory('${categoryId}')"]`);
+        if (card) card.remove();
+        
+        // Se era selezionata, torna a "Tutti"
+        if (currentCategory === categoryId) {
+            selectCategory('all');
+        }
+        
+        alert(`✅ Categoria "${category.name}" eliminata!`);
+        console.log('Categoria eliminata:', categoryId);
+    }
+}
+
+function closeCategoryModal() {
+    const modal = document.getElementById('categoryModal');
+    if (modal) modal.remove();
+}
+
+// ========== FUNZIONI INVENTARIO ==========
+function searchInventory(searchTerm) {
+    console.log('Ricerca inventario:', searchTerm);
+    // Qui andrà la logica di ricerca
+}
+
+function filterInventory(filterType) {
+    // Aggiorna pulsanti attivi
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    console.log('Filtro inventario:', filterType);
+    // Qui andrà la logica di filtro
+}
+
+function refreshInventory() {
+    console.log('Aggiornamento inventario...');
+    loadInventory();
+}
+
+// ========== MIGLIORA CONTROLLO PRODOTTI SIMILI ==========
+function updateSaleInfo() {
+    const select = document.getElementById('salesItemSelect');
+    const option = select.options[select.selectedIndex];
+    
+    if (option.value && option.dataset) {
+        currentItemPrice = parseFloat(option.dataset.price) || 0;
+        const available = parseInt(option.dataset.available) || 0;
+        
+        document.getElementById('itemInfo').style.display = 'block';
+        document.getElementById('itemDetails').innerHTML = 
+            `<strong>Disponibili:</strong> ${available} pezzi<br>` +
+            `<strong>Prezzo acquisto:</strong> €${currentItemPrice.toFixed(2)} cadauno<br>` +
+            `<strong>Prodotto:</strong> ${option.textContent.split(' (')[0]}`;
+        
+        // Imposta quantità massima
+        const qtyInput = document.querySelector('input[name="quantita_vendita"]');
+        qtyInput.max = available;
+        if (parseInt(qtyInput.value) > available) {
+            qtyInput.value = available;
+        }
+        
+        calculateSalePrice();
+    } else {
+        document.getElementById('itemInfo').style.display = 'none';
+        currentItemPrice = 0;
+        clearSalePreview();
+    }
+}
 // FUNZIONI BASE
 function showTab(tabName) {
     document.querySelectorAll('.form-section').forEach(section => {
@@ -1067,14 +2003,8 @@ function showMessage(text, type) {
 }
 
 function calculateUnitPrice() {
-    const quantita = parseInt(document.querySelector('input[name="quantita"]').value) || 0;
-    const prezzoTotale = parseFloat(document.querySelector('input[name="prezzo_totale"]').value) || 0;
-    if (quantita > 0 && prezzoTotale > 0) {
-        document.getElementById('pricePreview').style.display = 'block';
-        document.getElementById('priceCalc').innerHTML = `<strong>${quantita}x</strong> a <strong>€${(prezzoTotale/quantita).toFixed(2)}</strong> per pezzo`;
-    } else {
-        document.getElementById('pricePreview').style.display = 'none';
-    }
+    // Retrocompatibilità - reindirizza alla nuova funzione
+    calculateExpensePrice();
 }
 
 // FORM SPESE CON CONTROLLO SIMILARITÀ
