@@ -3088,7 +3088,7 @@ function updateCategoryCounters() {
             
             // Conta per ogni categoria
             allItems.forEach(item => {
-                const itemCategory = item.categoria || 'generale'; // Dalla colonna categoria del database
+                const itemCategory = item.categoria_prodotto || 'generale'; // ← GIUSTO
                 const itemValue = (item.quantita_disponibile || 0) * (item.prezzo_unitario || 0);
                 
                 console.log(`📦 Oggetto: ${item.descrizione} - Categoria: ${itemCategory} - Valore: €${itemValue.toFixed(2)}`);
