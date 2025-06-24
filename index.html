@@ -1811,7 +1811,7 @@ function updateCategoriesUI() {
                 <div class="category-icon">${category.icon}</div>
                 <div class="category-name">${category.name}</div>
                 <div class="category-count">${category.count || 0} articoli</div>
-                <div class="category-value">€${(category.value || 0).toFixed(0)} totale</div>
+                <div class="category-value">€${(category.value || 0).toFixed(2)} totale</div>
                 ${categoryId !== 'all' ? `
                     <div class="category-actions">
                         <button class="category-action-btn btn-edit-category" onclick="editCategory('${categoryId}', event)">✏️</button>
