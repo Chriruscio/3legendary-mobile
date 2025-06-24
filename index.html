@@ -1270,8 +1270,9 @@
                             <span id="priceCalc"></span>
                         </div>
                         
-                        <button type="submit" class="btn">💾 Salva Spesa</button>
-                    </form>
+                        <input type="hidden" name="product_category" id="productCategory" value="generale">
+<button type="submit" class="btn">💾 Salva Spesa</button>
+</form>
                 </div>
             </div>
             
@@ -1823,18 +1824,37 @@ function selectCategory(categoryId) {
     // Aggiorna breadcrumb
     const category = categories[categoryId];
     if (category) {
-        document.getElementById('currentCategoryBreadcrumb').textContent = `${category.icon} ${category.name}`;
-    }
-    
-    // Filtra prodotti
-    filterProductsByCategory(categoryId);
-    
-    console.log('Categoria selezionata:', categoryId);
+    document.getElementById('currentCategoryBreadcrumb').textContent = `${category.icon} ${category.name}`;
+}
+
+// Filtra prodotti
+filterProductsByCategory(categoryId);
+
+// 🆕 AGGIORNA CAMPO NASCOSTO PER NUOVE SPESE
+const categoryField = document.getElementById('productCategory');
+if (categoryField) {
+    categoryField.value = categoryId;
+    console.log('Categoria impostata per nuove spese:', categoryId);
+}
+
+console.log('Categoria selezionata:', categoryId);
 }
 
 function filterProductsByCategory(categoryId) {
-    // Qui andrà la logica di filtro quando collegato all'inventario reale
-    console.log('Filtrando per categoria:', categoryId);
+    const vendereItems = document.querySelectorAll('#inventoryVendereContent .item-card');
+    const internoItems = document.querySelectorAll('#inventoryInternoContent .item-card');
+    
+    [...vendereItems, ...internoItems].forEach(item => {
+        if (categoryId === 'all') {
+            item.style.display = 'block';
+        } else {
+            // Per ora mostra tutti perché i prodotti hanno categoria "generale"
+            // Quando collegheremo le categorie reali, questo filtrerà correttamente
+            item.style.display = 'block';
+        }
+    });
+    
+    console.log('Categoria filtrata:', categoryId);
 }
 
 function showAddCategoryModal() {
@@ -1896,20 +1916,34 @@ function createCategory() {
         return;
     }
     
-    // Aggiungi categoria
-    categories[categoryId] = {
-        name: name,
-        icon: icon,
-        count: 0,
-        value: 0
-    };
-    
-    // Aggiorna UI
-    addCategoryToGrid(categoryId, categories[categoryId]);
-    closeCategoryModal();
-    
-    alert(`✅ Categoria "${name}" creata con successo!`);
-    console.log('Nuova categoria:', categories[categoryId]);
+    // 🆕 SALVA NEL BACKEND
+apiCall('addCategory', {
+    name: name,
+    icon: icon,
+    description: `Categoria creata dall'utente: ${name}`
+}).then(result => {
+    if (result.success) {
+        // Aggiungi alla lista locale solo se salvata con successo
+        categories[result.categoryId || categoryId] = {
+            id: result.categoryId || categoryId,
+            name: name,
+            icon: icon,
+            count: 0,
+            value: 0
+        };
+        
+        // Aggiorna UI
+        addCategoryToGrid(result.categoryId || categoryId, categories[result.categoryId || categoryId]);
+        closeCategoryModal();
+        
+        alert(`✅ Categoria "${name}" creata e salvata!`);
+        console.log('Categoria salvata nel backend:', result);
+    } else {
+        alert('❌ Errore salvataggio: ' + result.message);
+    }
+}).catch(error => {
+    alert('❌ Errore connessione: ' + error.message);
+});
 }
 
 function addCategoryToGrid(categoryId, category) {
@@ -2984,10 +3018,10 @@ function updateInventoryStats(data) {
     });
     
     // Aggiorna UI
-    document.getElementById('totalItems').textContent = totalItems;
-    document.getElementById('availableItems').textContent = availableItems;
-    document.getElementById('totalValue').textContent = `€${totalValue.toFixed(0)}`;
-    document.getElementById('soldValue').textContent = `€${soldValue.toFixed(0)}`;
+document.getElementById('totalItems').textContent = totalItems;
+document.getElementById('availableItems').textContent = availableItems;
+document.getElementById('totalValue').textContent = `€${totalValue.toFixed(2)}`;  // ← 2 decimali
+document.getElementById('soldValue').textContent = `€${soldValue.toFixed(2)}`;    // ← 2 decimali
 }   
 </script>
 </body>
