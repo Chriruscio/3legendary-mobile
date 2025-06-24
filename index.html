@@ -2613,6 +2613,7 @@ console.log('📊 Tutti i dati del form:', data);
     document.querySelector('input[name="data"]').value = new Date().toISOString().split('T')[0];
     document.querySelector('input[name="quantita"]').value = 1;
     document.getElementById('pricePreview').style.display = 'none';
+}
 });
 
 // STUB PER ALTRI FORM
@@ -2968,10 +2969,10 @@ async function showSimilarProductDialog(newProductData, similarities) {
     
     resolve(true); // Operazione completata
 } else if (choice === 'separate') {
-                resolve(true); // Procedi con inserimento normale
-            } else {
-                resolve(false); // Annulla inserimento
-            }
+    resolve(true); // Procedi con inserimento normale
+} else {
+    resolve(false); // Annulla inserimento
+}
         };
     });
 }
