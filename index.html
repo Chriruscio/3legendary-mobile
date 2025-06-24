@@ -2125,6 +2125,10 @@ function calculateUnitPrice() {
 document.getElementById('expenseForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(this));
+
+// 🆕 DEBUG: verifica che la categoria venga inviata
+console.log('📋 Categoria selezionata nel form:', data.categoria_prodotto);
+console.log('📊 Tutti i dati del form:', data);
     
     // Se destinazione è "Da Vendere" o "Uso Interno", controlla similarità
     if (data.categoria === 'Da Vendere' || data.categoria === 'Uso Interno') {
