@@ -2257,15 +2257,13 @@ const internoHtml = result.data.usoInterno.map(item => `
 
 document.getElementById('inventoryVendereContent').innerHTML = vendereHtml;
 document.getElementById('inventoryInternoContent').innerHTML = internoHtml;
+updateInventoryStats(result.data);
 } else {
     showMessage('❌ ' + (result.message || 'Errore caricamento inventario'), 'error');
 }
 } catch (error) {
     showMessage('❌ Errore: ' + error.message, 'error');
 }
-
-// Aggiorna statistiche
-updateInventoryStats(result.data);
 
 document.getElementById('inventoryLoading').style.display = 'none';
 }
