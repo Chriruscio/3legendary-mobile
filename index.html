@@ -646,6 +646,8 @@
     font-size: 18px;
     font-weight: bold;
     background: rgba(0,0,0,0.9);
+    color: #fff !important;
+    border: 2px solid #8B0000 !important;
 }
 
 .currency {
@@ -1276,7 +1278,27 @@
             <!-- 2. INVENTARIO -->
             <div id="inventory" class="form-section">
                 <div class="section">
-                    <h2>📦 Inventario</h2>
+                    <h2>📦 INVENTARIO MAGAZZINO</h2>
+
+<!-- HEADER STATISTICHE -->
+<div class="inventory-stats">
+    <div class="stat-box">
+        <span class="stat-number" id="totalItems">--</span>
+        <div class="stat-label">Articoli Totali</div>
+    </div>
+    <div class="stat-box">
+        <span class="stat-number" id="availableItems">--</span>
+        <div class="stat-label">Disponibili</div>
+    </div>
+    <div class="stat-box">
+        <span class="stat-number" id="totalValue">€--</span>
+        <div class="stat-label">Valore Magazzino</div>
+    </div>
+    <div class="stat-box">
+        <span class="stat-number" id="soldValue">€--</span>
+        <div class="stat-label">Venduto</div>
+    </div>
+</div>
                     <!-- GESTIONE CATEGORIE -->
 <div class="categories-section">
     <div class="categories-header">
@@ -1336,24 +1358,7 @@
 </div>
 
 <!-- STATISTICHE INVENTARIO -->
-<div class="inventory-stats">
-    <div class="stat-box">
-        <span class="stat-number" id="totalItems">--</span>
-        <div class="stat-label">Articoli Totali</div>
-    </div>
-    <div class="stat-box">
-        <span class="stat-number" id="availableItems">--</span>
-        <div class="stat-label">Disponibili</div>
-    </div>
-    <div class="stat-box">
-        <span class="stat-number" id="totalValue">€--</span>
-        <div class="stat-label">Valore Magazzino</div>
-    </div>
-    <div class="stat-box">
-        <span class="stat-number" id="soldValue">€--</span>
-        <div class="stat-label">Venduto</div>
-    </div>
-</div>
+
                     <div class="inventory-tabs">
                         <div class="inventory-tab active" onclick="showInventoryTab('vendere')">💰 Da Vendere</div>
                         <div class="inventory-tab" onclick="showInventoryTab('interno')">🔧 Uso Interno</div>
@@ -1593,10 +1598,14 @@ function loadLocalData() {
 }
 
 // INIZIALIZZAZIONE
+// INIZIALIZZAZIONE
 document.addEventListener('DOMContentLoaded', function() {
     loadLocalData();
     const today = new Date().toISOString().split('T')[0];
     document.querySelectorAll('input[type="date"]').forEach(input => { if (!input.value) input.value = today; });
+    
+    // 🆕 CARICA CATEGORIE DAL BACKEND
+    loadCategories();
 });
 // ========== SISTEMA PREZZO DOPPIO SPESE ==========
 let isCalculatingExpense = false;
@@ -1627,7 +1636,7 @@ function calculateExpenseFromSingle() {
     const singlePrice = parseFloat(document.getElementById('expensePriceSingle').value) || 0;
     
     if (quantity > 0 && singlePrice > 0) {
-        const totalPrice = quantity * singlePrice;
+        const totalPrice = Math.round((quantity * singlePrice) * 100) / 100;
         document.getElementById('expensePriceTotal').value = totalPrice.toFixed(2);
         updateExpensePreview(quantity, totalPrice, singlePrice);
     } else {
@@ -1692,7 +1701,7 @@ function calculateSaleFromSingle() {
     const singlePrice = parseFloat(document.getElementById('salePriceSingle').value) || 0;
     
     if (quantity > 0 && singlePrice > 0) {
-        const totalPrice = quantity * singlePrice;
+        const totalPrice = Math.round((quantity * singlePrice) * 100) / 100;
         document.getElementById('salePriceTotal').value = totalPrice.toFixed(2);
         updateSalePreview(quantity, totalPrice, singlePrice);
     } else {
@@ -1746,12 +1755,58 @@ function clearSalePreview() {
 
 // ========== GESTIONE CATEGORIE ==========
 let currentCategory = 'all';
-let categories = {
-    'all': { name: 'Tutti i Prodotti', icon: '🌟', count: 0, value: 0 },
-    'booster-packs': { name: 'Booster Packs', icon: '🎴', count: 0, value: 0 },
-    'etb': { name: 'Elite Trainer Box', icon: '📦', count: 0, value: 0 }
-};
+let categories = {}; // Ora viene caricato dal backend
 
+// 🆕 CARICA CATEGORIE DAL BACKEND
+async function loadCategories() {
+    try {
+        const result = await apiCall('getCategories');
+        if (result.success) {
+            categories = result.categories;
+            updateCategoriesUI();
+            console.log('✅ Categorie caricate dal backend:', categories);
+        } else {
+            console.error('❌ Errore caricamento categorie:', result.message);
+            // Fallback alle categorie locali se il backend fallisce
+            categories = {
+                'all': { name: 'Tutti i Prodotti', icon: '🌟', count: 0, value: 0 },
+                'booster-packs': { name: 'Booster Packs', icon: '🎴', count: 0, value: 0 },
+                'etb': { name: 'Elite Trainer Box', icon: '📦', count: 0, value: 0 }
+            };
+        }
+    } catch (error) {
+        console.error('❌ Errore connessione categorie:', error);
+    }
+}
+// 🆕 AGGIORNA UI CATEGORIE
+function updateCategoriesUI() {
+    const grid = document.querySelector('.categories-grid');
+    if (!grid) return;
+    
+    // Svuota la griglia (tranne "Tutti")
+    grid.innerHTML = '';
+    
+    // Ricrea tutte le categorie dal backend
+    Object.entries(categories).forEach(([categoryId, category]) => {
+        const categoryHtml = `
+            <div class="category-card ${categoryId === currentCategory ? 'active' : ''}" onclick="selectCategory('${categoryId}')">
+                <div class="category-icon">${category.icon}</div>
+                <div class="category-name">${category.name}</div>
+                <div class="category-count">${category.count || 0} articoli</div>
+                <div class="category-value">€${(category.value || 0).toFixed(0)} totale</div>
+                ${categoryId !== 'all' ? `
+                    <div class="category-actions">
+                        <button class="category-action-btn btn-edit-category" onclick="editCategory('${categoryId}', event)">✏️</button>
+                        <button class="category-action-btn btn-delete-category" onclick="deleteCategory('${categoryId}', event)">🗑️</button>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+        grid.insertAdjacentHTML('beforeend', categoryHtml);
+    });
+    
+    console.log('🎨 UI categorie aggiornata');
+}
 function selectCategory(categoryId) {
     currentCategory = categoryId;
     
@@ -2124,70 +2179,96 @@ async function loadInventory() {
         const result = await apiCall('getInventory');
         
         if (result.success && result.data) {
-            // Renderizza inventario da vendere
-            const vendereHtml = result.data.daVendere.map(item => `
-                <div class="item-card">
-                    <div class="item-header">
-                        <span class="item-name">${item.descrizione}</span>
-                        <span class="item-status ${item.quantita_disponibile > 0 ? 'status-disponibile' : 'status-esaurito'}">
-                            ${item.quantita_disponibile > 0 ? 'DISPONIBILE' : 'ESAURITO'}
-                        </span>
-                    </div>
-                    <div class="quantity-info">
-                        <strong>Quantità:</strong> ${item.quantita_disponibile} disponibili (${item.quantita_totale} totali)<br>
-                        <strong>Prezzo acquisto:</strong> €${parseFloat(item.prezzo_unitario).toFixed(2)} cad.
-                    </div>
-                    <div class="item-details">
-    Acquistato da <strong>${item.acquistato_da}</strong> il ${new Date(item.data).toLocaleDateString('it-IT', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-    })}<br>
-    <button class="btn btn-small" onclick="editItem('${item.id}')" style="background: #FFA500; margin-top: 10px;">✏️ Modifica</button>
-<button class="btn btn-small" onclick="deleteItem('${item.id}')" style="background: #8B0000; margin-top: 10px;">🗑️ Elimina</button>
-<button class="btn btn-small" onclick="selectForUnify('${item.id}', '${item.descrizione}')" style="background: #006400; margin-top: 10px;">🔗 Unifica</button>
-</div>
-                </div>
-            `).join('') || '<p>Nessun oggetto da vendere</p>';
-            
-            // Renderizza inventario uso interno
-            const internoHtml = result.data.usoInterno.map(item => `
-                <div class="item-card">
-                    <div class="item-header">
-                        <span class="item-name">${item.descrizione}</span>
-                        <span class="item-status status-uso">USO INTERNO</span>
-                    </div>
-                    <div class="quantity-info">
-                        <strong>Quantità:</strong> ${item.quantita_totale}<br>
-                        <strong>Prezzo acquisto:</strong> €${parseFloat(item.prezzo_unitario).toFixed(2)} cad.
-                    </div>
-                    <div class="item-details">
-    Acquistato da <strong>${item.acquistato_da}</strong> il ${new Date(item.data).toLocaleDateString('it-IT', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-    })}<br>
-    <button class="btn btn-small" onclick="editItem('${item.id}')" style="background: #FFA500; margin-top: 10px;">✏️ Modifica</button>
-<button class="btn btn-small" onclick="deleteItem('${item.id}')" style="background: #8B0000; margin-top: 10px;">🗑️ Elimina</button>
-<button class="btn btn-small" onclick="selectForUnify('${item.id}', '${item.descrizione}')" style="background: #006400; margin-top: 10px;">🔗 Unifica</button>
-</div>
-                </div>
-            `).join('') || '<p>Nessun oggetto uso interno</p>';
-            
-            document.getElementById('inventoryVendereContent').innerHTML = vendereHtml;
-            document.getElementById('inventoryInternoContent').innerHTML = internoHtml;
-        } else {
-            showMessage('❌ ' + (result.message || 'Errore caricamento inventario'), 'error');
-        }
-    } catch (error) {
-        showMessage('❌ Errore: ' + error.message, 'error');
-    }
-    
-   document.getElementById('inventoryLoading').style.display = 'none';
+        // Renderizza inventario da vendere
+const vendereHtml = result.data.daVendere.map(item => `
+    <div class="item-card">
+        <div class="item-header">
+            <span class="item-name">🎴 ${item.descrizione}</span>
+            <span class="item-status ${item.quantita_disponibile > 0 ? 'status-disponibile' : 'status-esaurito'}">
+                ${item.quantita_disponibile > 0 ? '✅ DISPONIBILE' : '❌ ESAURITO'}
+            </span>
+        </div>
+        <div class="item-info-grid">
+            <div class="info-card">
+                <div class="info-label">📦 Quantità</div>
+                <div class="info-value">${item.quantita_disponibile} / ${item.quantita_totale} disponibili</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">💰 Prezzo Acquisto</div>
+                <div class="info-value">€${parseFloat(item.prezzo_unitario).toFixed(2)} cad.</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">👤 Acquistato da</div>
+                <div class="info-value">${item.acquistato_da}</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">📅 Data Acquisto</div>
+                <div class="info-value">${new Date(item.data).toLocaleDateString('it-IT')}</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">💎 Valore Rimanente</div>
+                <div class="info-value">€${(item.quantita_disponibile * parseFloat(item.prezzo_unitario)).toFixed(2)}</div>
+            </div>
+        </div>
+        <div class="item-actions">
+            <button class="action-btn btn-sell">📈 Vendi</button>
+            <button class="action-btn btn-edit" onclick="editItem('${item.id}')">✏️ Modifica</button>
+            <button class="action-btn btn-unify" onclick="selectForUnify('${item.id}', '${item.descrizione}')">🔗 Unifica</button>
+            <button class="action-btn btn-delete" onclick="deleteItem('${item.id}')">🗑️ Elimina</button>
+        </div>
+    </div>
+`).join('') || '<p>Nessun oggetto da vendere</p>';
+
+// Renderizza inventario uso interno
+const internoHtml = result.data.usoInterno.map(item => `
+    <div class="item-card">
+        <div class="item-header">
+            <span class="item-name">🛡️ ${item.descrizione}</span>
+            <span class="item-status status-uso">🔧 USO INTERNO</span>
+        </div>
+        <div class="item-info-grid">
+            <div class="info-card">
+                <div class="info-label">📦 Quantità</div>
+                <div class="info-value">${item.quantita_totale} pezzi</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">💰 Prezzo Acquisto</div>
+                <div class="info-value">€${parseFloat(item.prezzo_unitario).toFixed(2)} cad.</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">👤 Acquistato da</div>
+                <div class="info-value">${item.acquistato_da}</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">📅 Data Acquisto</div>
+                <div class="info-value">${new Date(item.data).toLocaleDateString('it-IT')}</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">💎 Valore Totale</div>
+                <div class="info-value">€${(item.quantita_totale * parseFloat(item.prezzo_unitario)).toFixed(2)}</div>
+            </div>
+        </div>
+        <div class="item-actions">
+            <button class="action-btn btn-edit" onclick="editItem('${item.id}')">✏️ Modifica</button>
+            <button class="action-btn btn-delete" onclick="deleteItem('${item.id}')">🗑️ Elimina</button>
+        </div>
+    </div>
+`).join('') || '<p>Nessun oggetto uso interno</p>';
+
+document.getElementById('inventoryVendereContent').innerHTML = vendereHtml;
+document.getElementById('inventoryInternoContent').innerHTML = internoHtml;
+} else {
+    showMessage('❌ ' + (result.message || 'Errore caricamento inventario'), 'error');
+}
+} catch (error) {
+    showMessage('❌ Errore: ' + error.message, 'error');
 }
 
+// Aggiorna statistiche
+updateInventoryStats(result.data);
+
+document.getElementById('inventoryLoading').style.display = 'none';
+}
 // CARICA OGGETTI VENDIBILI NEL DROPDOWN
 function loadSalesItems() {
     apiCall('getInventory').then(result => {
@@ -2886,7 +2967,30 @@ function confirmUnification(productId1, productId2) {
 function closeUnificationDialog() {
     const dialog = document.querySelector('div[style*="position: fixed"][style*="z-index: 9999"]');
     if (dialog) dialog.remove();
-}     
+}
+ // AGGIORNA STATISTICHE INVENTARIO
+function updateInventoryStats(data) {
+    const totalItems = (data.daVendere?.length || 0) + (data.usoInterno?.length || 0);
+    const availableItems = data.daVendere?.filter(item => item.quantita_disponibile > 0).length || 0;
+    
+    let totalValue = 0;
+    let soldValue = 0;
+    
+    // Calcola valori
+    [...(data.daVendere || []), ...(data.usoInterno || [])].forEach(item => {
+        const itemValue = item.quantita_disponibile * parseFloat(item.prezzo_unitario);
+        totalValue += itemValue;
+        
+        const soldQty = item.quantita_totale - item.quantita_disponibile;
+        soldValue += soldQty * parseFloat(item.prezzo_unitario);
+    });
+    
+    // Aggiorna UI
+    document.getElementById('totalItems').textContent = totalItems;
+    document.getElementById('availableItems').textContent = availableItems;
+    document.getElementById('totalValue').textContent = `€${totalValue.toFixed(0)}`;
+    document.getElementById('soldValue').textContent = `€${soldValue.toFixed(0)}`;
+}   
 </script>
 </body>
 </html>
