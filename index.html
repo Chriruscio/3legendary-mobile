@@ -1606,9 +1606,10 @@ async function loadPersonalBalanceWithPayments() {
             
             // 🎯 NUOVO HTML GENERATO CON CARD CHIARE
             const balanceHtml = `
-                ${generateBalanceCard('🎮 Ciano', balance.ciano, balance.totale)}
-                ${generateBalanceCard('🔥 Alex', balance.alex, balance.totale)}
-                ${generateBalanceCard('👑 King', balance.king, balance.totale)}
+    ${createBalanceExplanation()}
+    ${generateBalanceCard('🎮 Ciano', balance.ciano, balance.totale)}
+    ${generateBalanceCard('🔥 Alex', balance.alex, balance.totale)}
+    ${generateBalanceCard('👑 King', balance.king, balance.totale)}
                 
                 <div class="balance-item-new" style="border-color: #FFD700;">
                     <div class="balance-header" style="background: linear-gradient(135deg, #FFD700, #FFA500);">
@@ -1688,6 +1689,21 @@ function generateBalanceCard(nome, dati, totaleInvestito) {
     `;
 }
 
+    // 🎯 NUOVA FUNZIONE PER SPIEGAZIONE BILANCIO
+function createBalanceExplanation() {
+    return `
+        <div class="info-box" style="margin-bottom: 20px; background: rgba(255,215,0,0.1); border: 2px solid #FFD700;">
+            <div class="info-title">💡 Come Funziona il Bilancio</div>
+            <p><strong>🔄 DINAMICO:</strong> Questo bilancio si aggiorna <strong>automaticamente</strong> ogni volta che:</p>
+            <ul style="margin: 10px 0; padding-left: 20px; line-height: 1.5;">
+                <li>📦 <strong>Qualcuno fa una spesa</strong> → cambia chi deve dare/ricevere soldi</li>
+                <li>💸 <strong>Fate un pagamento interno</strong> → si aggiorna il saldo finale</li>
+            </ul>
+            <p style="margin-top: 10px;"><strong>🎯 Saldo Finale =</strong> Quanto dovete dare/ricevere <strong>ADESSO</strong> per essere in pari!</p>
+        </div>
+    `;
+}
+        
 // CAMBIA TAB INVENTARIO
 function showInventoryTab(type) {
     document.querySelectorAll('.inventory-tab').forEach(tab => {
