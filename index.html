@@ -2152,12 +2152,161 @@ function closeCategoryModal() {
     if (modal) modal.remove();
 }
 
-// ========== FUNZIONI INVENTARIO ==========
+// 🔍 FUNZIONE RICERCA INVENTARIO COMPLETA
 function searchInventory(searchTerm) {
-    console.log('Ricerca inventario:', searchTerm);
-    // Qui andrà la logica di ricerca
+    console.log('🔍 Ricerca inventario:', searchTerm);
+    
+    // Se il campo di ricerca è vuoto, mostra tutti i prodotti della categoria corrente
+    if (!searchTerm || searchTerm.trim() === '') {
+        filterProductsByCategory(currentCategory);
+        return;
+    }
+    
+    const normalizedSearchTerm = searchTerm.toLowerCase().trim();
+    
+    // Usa i dati dall'API
+    apiCall('getInventory').then(result => {
+        if (result.success && result.data) {
+            // Prima applica il filtro categoria, poi la ricerca
+            let filteredVendere = result.data.daVendere || [];
+            let filteredInterno = result.data.usoInterno || [];
+            
+            // Se non è "all", filtra prima per categoria
+            if (currentCategory !== 'all') {
+                filteredVendere = filteredVendere.filter(item => 
+                    (item.categoria_prodotto || 'generale') === currentCategory
+                );
+                filteredInterno = filteredInterno.filter(item => 
+                    (item.categoria_prodotto || 'generale') === currentCategory
+                );
+            }
+            
+            // Poi applica la ricerca per nome/descrizione/ID
+            filteredVendere = filteredVendere.filter(item => {
+                const itemName = (item.descrizione || '').toLowerCase();
+                const itemId = (item.id || '').toLowerCase();
+                const itemOwner = (item.acquistato_da || '').toLowerCase();
+                
+                return itemName.includes(normalizedSearchTerm) ||
+                       itemId.includes(normalizedSearchTerm) ||
+                       itemOwner.includes(normalizedSearchTerm);
+            });
+            
+            filteredInterno = filteredInterno.filter(item => {
+                const itemName = (item.descrizione || '').toLowerCase();
+                const itemId = (item.id || '').toLowerCase();
+                const itemOwner = (item.acquistato_da || '').toLowerCase();
+                
+                return itemName.includes(normalizedSearchTerm) ||
+                       itemId.includes(normalizedSearchTerm) ||
+                       itemOwner.includes(normalizedSearchTerm);
+            });
+            
+            console.log(`🔍 Trovati ${filteredVendere.length} prodotti da vendere e ${filteredInterno.length} uso interno`);
+            
+            // Genera HTML per risultati ricerca
+            const vendereHtml = filteredVendere.map(item => `
+                <div class="item-card" style="border-left: 4px solid #FFD700;">
+                    <div class="item-header">
+                        <span class="item-name">🔍 ${highlightSearchTerm(item.descrizione, searchTerm)}</span>
+                        <span class="item-status ${item.quantita_disponibile > 0 ? 'status-disponibile' : 'status-esaurito'}">
+                            ${item.quantita_disponibile > 0 ? '✅ DISPONIBILE' : '❌ ESAURITO'}
+                        </span>
+                    </div>
+                    <div class="item-info-grid">
+                        <div class="info-card">
+                            <div class="info-label">🆔 ID Prodotto</div>
+                            <div class="info-value">${item.id}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">📦 Quantità</div>
+                            <div class="info-value">${item.quantita_disponibile} / ${item.quantita_totale} disponibili</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">💰 Prezzo Acquisto</div>
+                            <div class="info-value">€${parseFloat(item.prezzo_unitario).toFixed(2)} cad.</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">👤 Acquistato da</div>
+                            <div class="info-value">${highlightSearchTerm(item.acquistato_da, searchTerm)}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">📅 Data Acquisto</div>
+                            <div class="info-value">${new Date(item.data).toLocaleDateString('it-IT')}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">📁 Categoria</div>
+                            <div class="info-value">${item.categoria_prodotto || 'generale'}</div>
+                        </div>
+                    </div>
+                    <div class="item-actions">
+                        <button class="action-btn btn-sell">📈 Vendi</button>
+                        <button class="action-btn btn-edit" onclick="editItem('${item.id}')">✏️ Modifica</button>
+                        <button class="action-btn btn-unify" onclick="selectForUnify('${item.id}', '${item.descrizione}')">🔗 Unifica</button>
+                        <button class="action-btn btn-delete" onclick="deleteItem('${item.id}')">🗑️ Elimina</button>
+                    </div>
+                </div>
+            `).join('') || `<p style="text-align: center; color: #ccc; padding: 40px;">🔍 Nessun risultato per "${searchTerm}"</p>`;
+            
+            const internoHtml = filteredInterno.map(item => `
+                <div class="item-card" style="border-left: 4px solid #FFD700;">
+                    <div class="item-header">
+                        <span class="item-name">🔍 ${highlightSearchTerm(item.descrizione, searchTerm)}</span>
+                        <span class="item-status status-uso">🔧 USO INTERNO</span>
+                    </div>
+                    <div class="item-info-grid">
+                        <div class="info-card">
+                            <div class="info-label">🆔 ID Prodotto</div>
+                            <div class="info-value">${item.id}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">📦 Quantità</div>
+                            <div class="info-value">${item.quantita_totale} pezzi</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">💰 Prezzo Acquisto</div>
+                            <div class="info-value">€${parseFloat(item.prezzo_unitario).toFixed(2)} cad.</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">👤 Acquistato da</div>
+                            <div class="info-value">${highlightSearchTerm(item.acquistato_da, searchTerm)}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">📅 Data Acquisto</div>
+                            <div class="info-value">${new Date(item.data).toLocaleDateString('it-IT')}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">📁 Categoria</div>
+                            <div class="info-value">${item.categoria_prodotto || 'generale'}</div>
+                        </div>
+                    </div>
+                    <div class="item-actions">
+                        <button class="action-btn btn-edit" onclick="editItem('${item.id}')">✏️ Modifica</button>
+                        <button class="action-btn btn-delete" onclick="deleteItem('${item.id}')">🗑️ Elimina</button>
+                    </div>
+                </div>
+            `).join('') || `<p style="text-align: center; color: #ccc; padding: 40px;">🔍 Nessun risultato uso interno per "${searchTerm}"</p>`;
+            
+            // Aggiorna l'HTML
+            document.getElementById('inventoryVendereContent').innerHTML = vendereHtml;
+            document.getElementById('inventoryInternoContent').innerHTML = internoHtml;
+            
+            console.log('✅ Ricerca completata!');
+        }
+    }).catch(error => {
+        console.error('❌ Errore nella ricerca:', error);
+    });
 }
 
+// 🎨 FUNZIONE PER EVIDENZIARE I TERMINI DI RICERCA
+function highlightSearchTerm(text, searchTerm) {
+    if (!text || !searchTerm) return text;
+    
+    const regex = new RegExp(`(${searchTerm})`, 'gi');
+    return text.replace(regex, '<mark style="background: #FFD700; color: #000; padding: 2px 4px; border-radius: 3px;">$1</mark>');
+}
+
+// 🔧 FUNZIONE FILTRI INVENTARIO COMPLETA
 function filterInventory(filterType) {
     // Aggiorna pulsanti attivi
     document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -2165,8 +2314,153 @@ function filterInventory(filterType) {
     });
     event.target.classList.add('active');
     
-    console.log('Filtro inventario:', filterType);
-    // Qui andrà la logica di filtro
+    console.log('🔧 Filtro inventario:', filterType);
+    
+    // Usa i dati dall'API
+    apiCall('getInventory').then(result => {
+        if (result.success && result.data) {
+            let filteredVendere = result.data.daVendere || [];
+            let filteredInterno = result.data.usoInterno || [];
+            
+            // Prima applica il filtro categoria corrente
+            if (currentCategory !== 'all') {
+                filteredVendere = filteredVendere.filter(item => 
+                    (item.categoria_prodotto || 'generale') === currentCategory
+                );
+                filteredInterno = filteredInterno.filter(item => 
+                    (item.categoria_prodotto || 'generale') === currentCategory
+                );
+            }
+            
+            // Poi applica il filtro di stato
+            switch(filterType) {
+                case 'disponibili':
+                    filteredVendere = filteredVendere.filter(item => item.quantita_disponibile > 0);
+                    // Uso interno non ha "disponibilità", li mostra tutti
+                    break;
+                    
+                case 'esauriti':
+                    filteredVendere = filteredVendere.filter(item => item.quantita_disponibile <= 0);
+                    filteredInterno = []; // Uso interno non può essere "esaurito"
+                    break;
+                    
+                case 'all':
+                default:
+                    // Mostra tutti (nessun filtro aggiuntivo)
+                    break;
+            }
+            
+            console.log(`🔧 Filtrati per "${filterType}": ${filteredVendere.length} da vendere, ${filteredInterno.length} uso interno`);
+            
+            // Genera HTML con indicatori di filtro
+            const getFilterIndicator = (filterType) => {
+                switch(filterType) {
+                    case 'disponibili': return '✅ DISPONIBILI';
+                    case 'esauriti': return '❌ ESAURITI';
+                    default: return '🌟 TUTTI';
+                }
+            };
+            
+            const vendereHtml = filteredVendere.map(item => `
+                <div class="item-card" style="border-left: 4px solid ${getFilterColor(filterType)};">
+                    <div class="item-header">
+                        <span class="item-name">🎴 ${item.descrizione}</span>
+                        <span class="item-status ${item.quantita_disponibile > 0 ? 'status-disponibile' : 'status-esaurito'}">
+                            ${item.quantita_disponibile > 0 ? '✅ DISPONIBILE' : '❌ ESAURITO'}
+                        </span>
+                    </div>
+                    <div class="item-info-grid">
+                        <div class="info-card">
+                            <div class="info-label">📦 Quantità</div>
+                            <div class="info-value">${item.quantita_disponibile} / ${item.quantita_totale} disponibili</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">💰 Prezzo Acquisto</div>
+                            <div class="info-value">€${parseFloat(item.prezzo_unitario).toFixed(2)} cad.</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">👤 Acquistato da</div>
+                            <div class="info-value">${item.acquistato_da}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">📅 Data Acquisto</div>
+                            <div class="info-value">${new Date(item.data).toLocaleDateString('it-IT')}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">💎 Valore Rimanente</div>
+                            <div class="info-value">€${(item.quantita_disponibile * parseFloat(item.prezzo_unitario)).toFixed(2)}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">📁 Categoria</div>
+                            <div class="info-value">${item.categoria_prodotto || 'generale'}</div>
+                        </div>
+                    </div>
+                    <div class="item-actions">
+                        <button class="action-btn btn-sell">📈 Vendi</button>
+                        <button class="action-btn btn-edit" onclick="editItem('${item.id}')">✏️ Modifica</button>
+                        <button class="action-btn btn-unify" onclick="selectForUnify('${item.id}', '${item.descrizione}')">🔗 Unifica</button>
+                        <button class="action-btn btn-delete" onclick="deleteItem('${item.id}')">🗑️ Elimina</button>
+                    </div>
+                </div>
+            `).join('') || `<p style="text-align: center; color: #ccc; padding: 40px;">📭 Nessun prodotto ${getFilterIndicator(filterType).toLowerCase()}</p>`;
+            
+            const internoHtml = filteredInterno.map(item => `
+                <div class="item-card" style="border-left: 4px solid ${getFilterColor(filterType)};">
+                    <div class="item-header">
+                        <span class="item-name">🛡️ ${item.descrizione}</span>
+                        <span class="item-status status-uso">🔧 USO INTERNO</span>
+                    </div>
+                    <div class="item-info-grid">
+                        <div class="info-card">
+                            <div class="info-label">📦 Quantità</div>
+                            <div class="info-value">${item.quantita_totale} pezzi</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">💰 Prezzo Acquisto</div>
+                            <div class="info-value">€${parseFloat(item.prezzo_unitario).toFixed(2)} cad.</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">👤 Acquistato da</div>
+                            <div class="info-value">${item.acquistato_da}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">📅 Data Acquisto</div>
+                            <div class="info-value">${new Date(item.data).toLocaleDateString('it-IT')}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">💎 Valore Totale</div>
+                            <div class="info-value">€${(item.quantita_totale * parseFloat(item.prezzo_unitario)).toFixed(2)}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">📁 Categoria</div>
+                            <div class="info-value">${item.categoria_prodotto || 'generale'}</div>
+                        </div>
+                    </div>
+                    <div class="item-actions">
+                        <button class="action-btn btn-edit" onclick="editItem('${item.id}')">✏️ Modifica</button>
+                        <button class="action-btn btn-delete" onclick="deleteItem('${item.id}')">🗑️ Elimina</button>
+                    </div>
+                </div>
+            `).join('') || `<p style="text-align: center; color: #ccc; padding: 40px;">📭 Nessun prodotto uso interno</p>`;
+            
+            // Aggiorna l'HTML
+            document.getElementById('inventoryVendereContent').innerHTML = vendereHtml;
+            document.getElementById('inventoryInternoContent').innerHTML = internoHtml;
+            
+            console.log('✅ Filtro applicato con successo!');
+        }
+    }).catch(error => {
+        console.error('❌ Errore nel filtro:', error);
+    });
+}
+
+// 🎨 FUNZIONE HELPER PER COLORI FILTRI
+function getFilterColor(filterType) {
+    switch(filterType) {
+        case 'disponibili': return '#006400'; // Verde
+        case 'esauriti': return '#8B0000';    // Rosso
+        default: return '#FFD700';            // Oro
+    }
 }
 
 function refreshInventory() {
