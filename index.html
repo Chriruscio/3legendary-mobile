@@ -1843,7 +1843,7 @@ function populateCategoryDropdown() {
         }
     });
     
-    console.log('📁 Dropdown categorie popolato');
+    console.log('📁 Dropdown popolato con:', Object.keys(categories));
 }
 function selectCategory(categoryId) {
     currentCategory = categoryId;
@@ -2336,6 +2336,7 @@ const internoHtml = result.data.usoInterno.map(item => `
 document.getElementById('inventoryVendereContent').innerHTML = vendereHtml;
 document.getElementById('inventoryInternoContent').innerHTML = internoHtml;
 updateInventoryStats(result.data);
+updateCategoryCounters(); // ← AGGIUNGI QUESTA RIGA
 } else {
     showMessage('❌ ' + (result.message || 'Errore caricamento inventario'), 'error');
 }
@@ -3067,6 +3068,37 @@ document.getElementById('availableItems').textContent = availableItems;
 document.getElementById('totalValue').textContent = `€${totalValue.toFixed(2)}`;  // ← 2 decimali
 document.getElementById('soldValue').textContent = `€${soldValue.toFixed(2)}`;    // ← 2 decimali
 }   
+// AGGIORNA CONTATORI CATEGORIE
+function updateCategoryCounters() {
+    // Resetta contatori
+    Object.keys(categories).forEach(categoryId => {
+        if (categories[categoryId]) {
+            categories[categoryId].count = 0;
+            categories[categoryId].value = 0;
+        }
+    });
+    
+    // Conta prodotti dall'inventario attuale
+    const allItems = [...(document.querySelectorAll('#inventoryVendereContent .item-card')), 
+                      ...(document.querySelectorAll('#inventoryInternoContent .item-card'))];
+    
+    allItems.forEach(itemCard => {
+        const itemName = itemCard.querySelector('.item-name')?.textContent || '';
+        
+        // Trova categoria basata sul nome (temporaneo)
+        if (itemName.includes('pack') || itemName.includes('Pack')) {
+            if (categories['pack']) categories['pack'].count++;
+        } else if (itemName.includes('Booster')) {
+            if (categories['booster-packs']) categories['booster-packs'].count++;
+        } else if (itemName.includes('Elite') || itemName.includes('ETB')) {
+            if (categories['etb']) categories['etb'].count++;
+        }
+    });
+    
+    // Aggiorna UI categorie
+    updateCategoriesUI();
+    console.log('🔢 Contatori categorie aggiornati');
+} 
 </script>
 </body>
 </html>
