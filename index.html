@@ -1603,7 +1603,13 @@ async function loadPersonalBalanceWithPayments() {
         
         if (result.success) {
             const { balance, pagamenti } = result;
-            
+            // 🎯 CALCOLA CHI DEVE VERSARE A CHI
+    const destinatari = calcolaDestinatari(balance);
+    
+    // Aggiungi destinatari ai dati
+    balance.ciano.destinatario = destinatari.ciano;
+    balance.alex.destinatario = destinatari.alex;
+    balance.king.destinatario = destinatari.king;
             // 🎯 NUOVO HTML GENERATO CON CARD CHIARE
             const balanceHtml = `
     ${createBalanceExplanation()}
@@ -1692,9 +1698,15 @@ function generateBalanceCard(nome, dati, totaleInvestito) {
                     <span class="detail-value">${dati.pagamenti > 0 ? '+€' + dati.pagamenti.toFixed(2) : dati.pagamenti < 0 ? '€' + Math.abs(dati.pagamenti).toFixed(2) : '€0.00'}</span>
                 </div>
                 <div class="detail-row" style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 5px; margin-top: 8px;">
-                    <span class="detail-label">🎯 SALDO FINALE:</span>
-                    <span class="detail-value" style="color: ${statusColor}; font-weight: bold; font-size: 1.1em;">${dati.reale >= 0 ? '+' : ''}€${dati.reale.toFixed(2)}</span>
-                </div>
+    <span class="detail-label">🎯 SALDO FINALE:</span>
+    <span class="detail-value" style="color: ${statusColor}; font-weight: bold; font-size: 1.1em;">${dati.reale >= 0 ? '+' : ''}€${dati.reale.toFixed(2)}</span>
+</div>
+${dati.reale !== 0 ? `
+<div class="detail-row" style="background: rgba(255,215,0,0.1); padding: 8px; border-radius: 5px; margin-top: 5px; border: 1px solid #FFD700;">
+    <span class="detail-label">${dati.reale > 0 ? '🎁 RICEVERAI DA:' : '💸 VERSA A:'}</span>
+    <span class="detail-value" style="font-weight: bold;">${dati.destinatario || 'Calcolo in corso...'}</span>
+</div>
+` : ''}`
             </div>
         </div>
     `;
@@ -1714,7 +1726,48 @@ function createBalanceExplanation() {
         </div>
     `;
 }
-        
+      // 🎯 FUNZIONE PER CALCOLARE CHI DEVE VERSARE A CHI
+function calcolaDestinatari(balance) {
+    const persone = [
+        { nome: 'Ciano', saldo: balance.ciano.reale },
+        { nome: 'Alex', saldo: balance.alex.reale },
+        { nome: 'King', saldo: balance.king.reale }
+    ];
+    
+    // Separa chi deve ricevere e chi deve versare
+    const deveRicevere = persone.filter(p => p.saldo > 0).sort((a, b) => b.saldo - a.saldo);
+    const deveVersare = persone.filter(p => p.saldo < 0).sort((a, b) => a.saldo - b.saldo);
+    const inPari = persone.filter(p => Math.abs(p.saldo) < 0.01);
+    
+    const destinatari = {};
+    
+    // Chi è in pari
+    inPari.forEach(persona => {
+        destinatari[persona.nome.toLowerCase()] = 'In pari! 🎯';
+    });
+    
+    // Chi deve ricevere
+    deveRicevere.forEach(persona => {
+        const versatori = deveVersare.filter(p => p.saldo < 0).map(p => p.nome);
+        if (versatori.length > 0) {
+            destinatari[persona.nome.toLowerCase()] = versatori.join(' e ');
+        } else {
+            destinatari[persona.nome.toLowerCase()] = 'Tutti in pari';
+        }
+    });
+    
+    // Chi deve versare
+    deveVersare.forEach(persona => {
+        const ricevitori = deveRicevere.filter(p => p.saldo > 0).map(p => p.nome);
+        if (ricevitori.length > 0) {
+            destinatari[persona.nome.toLowerCase()] = ricevitori.join(' e ');
+        } else {
+            destinatari[persona.nome.toLowerCase()] = 'Tutti in pari';
+        }
+    });
+    
+    return destinatari;
+}  
 // CAMBIA TAB INVENTARIO
 function showInventoryTab(type) {
     document.querySelectorAll('.inventory-tab').forEach(tab => {
