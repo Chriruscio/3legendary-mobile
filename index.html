@@ -625,6 +625,100 @@
                 background: rgba(0,0,0,0.9);
             }
         }
+        /* 🔧 NUOVO LAYOUT BILANCIO MIGLIORATO - AGGIUNGI ALLA FINE DEL CSS */
+.balance-item-new {
+    background: rgba(0,0,0,0.8);
+    margin: 15px 0;
+    border-radius: 15px;
+    border: 2px solid #8B0000;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.balance-header {
+    background: linear-gradient(135deg, #8B0000, #FF0000);
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.balance-name-new {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #fff;
+    cursor: pointer;
+}
+
+.balance-status {
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.9em;
+    text-align: center;
+    min-width: 100px;
+}
+
+.status-positive {
+    background: #006400;
+    color: #90EE90;
+}
+
+.status-negative {
+    background: #8B0000;
+    color: #FFB6C1;
+}
+
+.status-neutral {
+    background: #FFD700;
+    color: #000;
+}
+
+.balance-details {
+    padding: 15px 20px;
+    background: rgba(255,255,255,0.05);
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 0.9em;
+}
+
+.detail-label {
+    color: #FFD700;
+    font-weight: bold;
+}
+
+.detail-value {
+    color: #fff;
+    font-weight: normal;
+}
+
+.divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #FFD700, transparent);
+    margin: 10px 0;
+}
+
+/* 📱 RESPONSIVE OTTIMIZZATO PER MOBILE */
+@media (max-width: 480px) {
+    .balance-header {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .balance-status {
+        min-width: auto;
+        width: 100%;
+    }
+    
+    .detail-row {
+        font-size: 0.85em;
+    }
+}
     </style>
 </head>
 <body>
@@ -1500,6 +1594,7 @@ async function loadPersonalBalance() {
       document.getElementById('balanceLoading').style.display = 'none';
 }
     // CARICA BILANCIO CON PAGAMENTI
+// SOSTITUISCI COMPLETAMENTE la funzione loadPersonalBalanceWithPayments() con questa:
 async function loadPersonalBalanceWithPayments() {
     document.getElementById('balanceLoading').style.display = 'block';
     
@@ -1509,35 +1604,21 @@ async function loadPersonalBalanceWithPayments() {
         if (result.success) {
             const { balance, pagamenti } = result;
             
+            // 🎯 NUOVO HTML GENERATO CON CARD CHIARE
             const balanceHtml = `
-                <div class="balance-item">
-                    <span class="balance-name" onclick="showPersonDetails('Ciano')" style="cursor: pointer;">🎮 Ciano</span>
-                    <div style="text-align: right;">
-                        <div style="font-size: 0.8em; opacity: 0.8;">Teorico: €${balance.ciano.teorico.toFixed(2)} | Pagamenti: €${balance.ciano.pagamenti.toFixed(2)}</div>
-                        <span class="balance-amount ${balance.ciano.reale >= 0 ? 'positive' : 'negative'}">${balance.ciano.stato}</span>
+                ${generateBalanceCard('🎮 Ciano', balance.ciano, balance.totale)}
+                ${generateBalanceCard('🔥 Alex', balance.alex, balance.totale)}
+                ${generateBalanceCard('👑 King', balance.king, balance.totale)}
+                
+                <div class="balance-item-new" style="border-color: #FFD700;">
+                    <div class="balance-header" style="background: linear-gradient(135deg, #FFD700, #FFA500);">
+                        <span class="balance-name-new" style="color: #000;">💰 Totale Investito</span>
+                        <span class="balance-status" style="background: #000; color: #FFD700;">€${balance.totale.toFixed(2)}</span>
                     </div>
-                </div>
-                <div class="balance-item">
-                    <span class="balance-name" onclick="showPersonDetails('Alex')" style="cursor: pointer;">🔥 Alex</span>
-                    <div style="text-align: right;">
-                        <div style="font-size: 0.8em; opacity: 0.8;">Teorico: €${balance.alex.teorico.toFixed(2)} | Pagamenti: €${balance.alex.pagamenti.toFixed(2)}</div>
-                        <span class="balance-amount ${balance.alex.reale >= 0 ? 'positive' : 'negative'}">${balance.alex.stato}</span>
-                    </div>
-                </div>
-                <div class="balance-item">
-                    <span class="balance-name" onclick="showPersonDetails('King')" style="cursor: pointer;">👑 King</span>
-                    <div style="text-align: right;">
-                        <div style="font-size: 0.8em; opacity: 0.8;">Teorico: €${balance.king.teorico.toFixed(2)} | Pagamenti: €${balance.king.pagamenti.toFixed(2)}</div>
-                        <span class="balance-amount ${balance.king.reale >= 0 ? 'positive' : 'negative'}">${balance.king.stato}</span>
-                    </div>
-                </div>
-                <div class="balance-item" style="border-top: 2px solid #FFD700; margin-top: 15px; padding-top: 15px;">
-                    <span class="balance-name">💰 Totale Investito</span>
-                    <span class="balance-amount" style="background: #FFD700; color: #000;">€${balance.totale.toFixed(2)}</span>
                 </div>
             `;
             
-            // Cronologia pagamenti
+            // Cronologia pagamenti (come prima)
             let paymentsHtml = '';
             if (pagamenti && pagamenti.length > 0) {
                 paymentsHtml = `
@@ -1563,7 +1644,49 @@ async function loadPersonalBalanceWithPayments() {
     }
     
     document.getElementById('balanceLoading').style.display = 'none';
-}    
+}
+
+// 🎯 NUOVA FUNZIONE PER GENERARE LE CARD DEL BILANCIO
+function generateBalanceCard(nome, dati, totaleInvestito) {
+    const statusClass = dati.reale >= 0 ? 'status-positive' : 'status-negative';
+    const statusColor = dati.reale >= 0 ? '#90EE90' : '#FFB6C1';
+    const quotaTeorica = totaleInvestito / 3;
+    
+    // Calcola quanto ha speso realmente (dalla differenza teorica)
+    const spesoReale = quotaTeorica + dati.teorico;
+    
+    return `
+        <div class="balance-item-new">
+            <div class="balance-header">
+                <span class="balance-name-new" onclick="showPersonDetails('${nome.replace(/🎮|🔥|👑/g, '').trim()}')">${nome}</span>
+                <span class="balance-status ${statusClass}">${dati.stato}</span>
+            </div>
+            <div class="balance-details">
+                <div class="detail-row">
+                    <span class="detail-label">💰 Ha Speso:</span>
+                    <span class="detail-value">€${spesoReale.toFixed(2)}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">📊 Dovrebbe Spendere:</span>
+                    <span class="detail-value">€${quotaTeorica.toFixed(2)}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">⚖️ Differenza Teorica:</span>
+                    <span class="detail-value" style="color: ${dati.teorico >= 0 ? '#90EE90' : '#FFB6C1'};">${dati.teorico >= 0 ? '+' : ''}€${dati.teorico.toFixed(2)}</span>
+                </div>
+                <div class="divider"></div>
+                <div class="detail-row">
+                    <span class="detail-label">💸 Pagamenti Fatti:</span>
+                    <span class="detail-value">€${dati.pagamenti.toFixed(2)}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">🎯 Saldo FINALE:</span>
+                    <span class="detail-value" style="color: ${statusColor}; font-weight: bold; font-size: 1.1em;">${dati.reale >= 0 ? '+' : ''}€${dati.reale.toFixed(2)}</span>
+                </div>
+            </div>
+        </div>
+    `;
+}
 
 // CAMBIA TAB INVENTARIO
 function showInventoryTab(type) {
