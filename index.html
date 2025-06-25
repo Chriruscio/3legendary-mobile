@@ -3094,15 +3094,15 @@ async function loadSalesReport() {
         if (result.success) {
             const { sales, stats } = result;
             
-            // 🛡️ PROTEZIONE CONTRO NaN - valori di default
-            const safeStats = {
-                totalRevenue: isNaN(stats.totalRevenue) ? 0 : (stats.totalRevenue || 0),
-                totalProfit: isNaN(stats.totalProfit) ? 0 : (stats.totalProfit || 0),
-                avgROI: isNaN(stats.avgROI) ? 0 : (stats.avgROI || 0),
-                itemsSold: isNaN(stats.itemsSold) ? 0 : (stats.itemsSold || 0),
-                totalCost: isNaN(stats.totalCost) ? 0 : (stats.totalCost || 0),
-                transactionCount: isNaN(stats.transactionCount) ? 0 : (stats.transactionCount || 0)
-            };
+            // 🛡️ PROTEZIONE CONTRO NaN - valori di default con conversione forzata
+const safeStats = {
+    totalRevenue: parseFloat(stats.totalRevenue) || 0,
+    totalProfit: parseFloat(stats.totalProfit) || 0,
+    avgROI: parseFloat(stats.avgROI) || 0,
+    itemsSold: parseInt(stats.itemsSold) || 0,
+    totalCost: parseFloat(stats.totalCost) || 0,
+    transactionCount: parseInt(stats.transactionCount) || 0
+};
             
             console.log('📊 Stats ricevute:', stats);
             console.log('🛡️ Stats sicure:', safeStats);
