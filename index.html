@@ -3119,6 +3119,10 @@ const safeStats = {
             <div class="stat-label">Profitto Totale</div>
         </div>
         <div class="stat-card">
+            <div class="stat-value">€${safeStats.totalCost.toFixed(2)}</div>
+            <div class="stat-label">Costo Totale</div>
+        </div>
+        <div class="stat-card">
             <div class="stat-value">€${(safeStats.totalProfit / 3).toFixed(2)}</div>
             <div class="stat-label">Profitto per Socio</div>
         </div>
@@ -3144,20 +3148,19 @@ const safeStats = {
             }));
             
             const salesHtml = safeSales.slice(-5).reverse().map(sale => {
-    // Calcola percentuale di profitto
-    const costPrice = sale.prezzo_totale_vendita - sale.profitto_totale;
-    const profitPercentage = costPrice > 0 ? ((sale.profitto_totale / costPrice) * 100).toFixed(1) : 0;
+    // Calcola costo acquisto totale
+    const totalCost = sale.prezzo_totale_vendita - sale.profitto_totale;
+    const unitCost = totalCost / sale.quantita;
+    const profitPercentage = totalCost > 0 ? ((sale.profitto_totale / totalCost) * 100).toFixed(1) : 0;
     
     return `
         <div class="item-card">
             <div class="item-header">
                 <span class="item-name">${sale.quantita}x ${sale.oggetto}</span>
-                <span class="profit-${sale.profitto_totale >= 0 ? 'positive' : 'negative'}">
-                    ${sale.profitto_totale >= 0 ? '+' : ''}€${sale.profitto_totale.toFixed(2)}
-                </span>
+                <span class="profit-positive">€${sale.prezzo_totale_vendita.toFixed(2)}</span>
             </div>
             <div class="item-details">
-                <strong>Vendita:</strong> €${sale.prezzo_totale_vendita.toFixed(2)} totale<br>
+                <strong>Costo acquisto:</strong> €${totalCost.toFixed(2)} (€${unitCost.toFixed(2)} x ${sale.quantita})<br>
                 <strong>Profitto:</strong> ${sale.profitto_totale >= 0 ? '+' : ''}€${sale.profitto_totale.toFixed(2)} (${sale.profitto_totale >= 0 ? '+' : ''}${profitPercentage}%)<br>
                 <strong>Venduto a:</strong> ${sale.venduto_a}<br>
                 <strong>Data:</strong> ${new Date(sale.data).toLocaleDateString('it-IT')}
