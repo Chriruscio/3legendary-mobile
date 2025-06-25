@@ -2981,18 +2981,84 @@ async function showSimilarProductDialog(newProductData, similarities) {
 }
 // ELIMINA OGGETTO INVENTARIO
 function deleteItem(itemId) {
-    if (confirm("Sei sicuro di voler eliminare questo oggetto?")) {
-        apiCall('deleteItem', {
-            id: itemId
-        }).then(result => {
-            if (result.success) {
-                showMessage('✅ Oggetto eliminato!', 'success');
-                loadInventory();
-            } else {
-                showMessage('❌ ' + result.message, 'error');
+    // Prima recupera info prodotto per messaggio personalizzato
+    apiCall('getInventory').then(result => {
+        if (result.success && result.data) {
+            // Trova il prodotto da eliminare
+            let productToDelete = null;
+            [...result.data.daVendere, ...result.data.usoInterno].forEach(item => {
+                if (item.id === itemId) productToDelete = item;
+            });
+            
+            if (!productToDelete) {
+                showMessage('❌ Prodotto non trovato', 'error');
+                return;
             }
-        });
-    }
+            
+            // Conferma eliminazione personalizzata
+            const confirmMessage = `⚠️ ELIMINAZIONE COMPLETA
+            
+📦 Prodotto: "${productToDelete.descrizione}"
+👤 Acquistato da: ${productToDelete.acquistato_da}
+📊 Quantità: ${productToDelete.quantita_totale} (${productToDelete.quantita_disponibile} disponibili)
+💰 Valore: €${(productToDelete.quantita_totale * parseFloat(productToDelete.prezzo_unitario)).toFixed(2)}
+
+🗑️ COSA VERRÀ ELIMINATO:
+✅ Prodotto dall'inventario
+✅ Spesa originale (€${(productToDelete.quantita_totale * parseFloat(productToDelete.prezzo_unitario)).toFixed(2)})
+✅ Movimento cassa (se applicabile)
+✅ Aggiornamento bilancio personale
+
+❗ Le eventuali VENDITE già registrate rimarranno nel sistema.
+
+Sei sicuro di voler procedere?`;
+            
+            if (confirm(confirmMessage)) {
+                showMessage('🗑️ Eliminazione in corso...', 'success');
+                
+                apiCall('deleteItem', { id: itemId }).then(deleteResult => {
+                    if (deleteResult.success) {
+                        showMessage(deleteResult.message, 'success');
+                        
+                        // 🔄 AGGIORNA TUTTO DOPO ELIMINAZIONE
+                        invalidateInventoryCache();
+                        loadInventory();
+                        
+                        // Se siamo in altre tab, aggiorna anche quelle
+                        const activeTab = document.querySelector('.tab.active');
+                        if (activeTab) {
+                            const tabText = activeTab.textContent.toLowerCase();
+                            if (tabText.includes('bilancio')) {
+                                loadPersonalBalanceWithPayments();
+                            } else if (tabText.includes('cassa')) {
+                                loadCashStatus();
+                            } else if (tabText.includes('report')) {
+                                loadSalesReport();
+                            }
+                        }
+                        
+                    } else {
+                        showMessage('❌ ' + deleteResult.message, 'error');
+                    }
+                }).catch(error => {
+                    showMessage('❌ Errore eliminazione: ' + error.message, 'error');
+                });
+            }
+        }
+    }).catch(error => {
+        // Fallback se non riesce a caricare info prodotto
+        if (confirm("🗑️ Sei sicuro di voler eliminare questo oggetto?\n\n⚠️ Verrà rimosso completamente da spese e inventario.\nLe eventuali vendite rimarranno registrate.")) {
+            apiCall('deleteItem', { id: itemId }).then(result => {
+                if (result.success) {
+                    showMessage(result.message, 'success');
+                    invalidateInventoryCache();
+                    loadInventory();
+                } else {
+                    showMessage('❌ ' + result.message, 'error');
+                }
+            });
+        }
+    });
 }
 
 async function loadSalesReport() {
