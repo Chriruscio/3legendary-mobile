@@ -2971,7 +2971,7 @@ async function showSimilarProductDialog(newProductData, similarities) {
         showMessage('❌ Errore unificazione: ' + error.message, 'error');
     });
     
-    resolve(true); // Operazione completata
+    resolve(false);
 } else if (choice === 'separate') {
     resolve(true); // Procedi con inserimento normale
 } else {
