@@ -3021,8 +3021,22 @@ Sei sicuro di voler procedere?`;
                         showMessage(deleteResult.message, 'success');
                         
                         // 🔄 AGGIORNA TUTTO DOPO ELIMINAZIONE
-                        invalidateInventoryCache();
-                        loadInventory();
+invalidateInventoryCache();
+loadInventory();
+
+// 🔄 FORZA AGGIORNAMENTO COMPLETO STATISTICHE
+setTimeout(() => {
+    updateInventoryStats(result.data || {});
+    updateCategoryCounters();
+    
+    // Ricarica anche l'inventario per sicurezza
+    apiCall('getInventory').then(invResult => {
+        if (invResult.success && invResult.data) {
+            updateInventoryStats(invResult.data);
+            updateCategoryCounters();
+        }
+    });
+}, 500); // Piccolo delay per essere sicuri
                         
                         // Se siamo in altre tab, aggiorna anche quelle
                         const activeTab = document.querySelector('.tab.active');
@@ -3052,7 +3066,17 @@ Sei sicuro di voler procedere?`;
                 if (result.success) {
                     showMessage(result.message, 'success');
                     invalidateInventoryCache();
-                    loadInventory();
+loadInventory();
+
+// 🔄 AGGIORNA STATISTICHE ANCHE NEL FALLBACK
+setTimeout(() => {
+    updateCategoryCounters();
+    apiCall('getInventory').then(invResult => {
+        if (invResult.success && invResult.data) {
+            updateInventoryStats(invResult.data);
+        }
+    });
+}, 500);
                 } else {
                     showMessage('❌ ' + result.message, 'error');
                 }
@@ -3070,47 +3094,77 @@ async function loadSalesReport() {
         if (result.success) {
             const { sales, stats } = result;
             
+            // 🛡️ PROTEZIONE CONTRO NaN - valori di default
+            const safeStats = {
+                totalRevenue: isNaN(stats.totalRevenue) ? 0 : (stats.totalRevenue || 0),
+                totalProfit: isNaN(stats.totalProfit) ? 0 : (stats.totalProfit || 0),
+                avgROI: isNaN(stats.avgROI) ? 0 : (stats.avgROI || 0),
+                itemsSold: isNaN(stats.itemsSold) ? 0 : (stats.itemsSold || 0),
+                totalCost: isNaN(stats.totalCost) ? 0 : (stats.totalCost || 0),
+                transactionCount: isNaN(stats.transactionCount) ? 0 : (stats.transactionCount || 0)
+            };
+            
+            console.log('📊 Stats ricevute:', stats);
+            console.log('🛡️ Stats sicure:', safeStats);
+            
             const statsHtml = `
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-value">€${stats.totalRevenue.toFixed(2)}</div>
+                        <div class="stat-value">€${safeStats.totalRevenue.toFixed(2)}</div>
                         <div class="stat-label">Ricavo Totale</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value">€${stats.totalProfit.toFixed(2)}</div>
+                        <div class="stat-value">€${safeStats.totalProfit.toFixed(2)}</div>
                         <div class="stat-label">Profitto Totale</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value">${stats.avgROI}%</div>
+                        <div class="stat-value">${safeStats.avgROI.toFixed(1)}%</div>
                         <div class="stat-label">ROI Medio</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value">${stats.itemsSold}</div>
+                        <div class="stat-value">${safeStats.itemsSold}</div>
                         <div class="stat-label">Oggetti Venduti</div>
                     </div>
                 </div>
             `;
             
-            const salesHtml = sales.slice(-5).reverse().map(sale => `
+            // 🛡️ PROTEZIONE ANCHE PER LE VENDITE INDIVIDUALI
+            const safeSales = (sales || []).map(sale => ({
+                quantita: sale.quantita || 0,
+                oggetto: sale.oggetto || 'Prodotto sconosciuto',
+                profitto_totale: isNaN(parseFloat(sale.profitto_totale)) ? 0 : parseFloat(sale.profitto_totale),
+                prezzo_totale_vendita: isNaN(parseFloat(sale.prezzo_totale_vendita)) ? 0 : parseFloat(sale.prezzo_totale_vendita),
+                venduto_a: sale.venduto_a || 'Cliente sconosciuto',
+                data: sale.data || new Date().toISOString()
+            }));
+            
+            const salesHtml = safeSales.slice(-5).reverse().map(sale => `
                 <div class="item-card">
                     <div class="item-header">
                         <span class="item-name">${sale.quantita}x ${sale.oggetto}</span>
-                        <span class="profit-positive">+€${parseFloat(sale.profitto_totale).toFixed(2)}</span>
+                        <span class="profit-${sale.profitto_totale >= 0 ? 'positive' : 'negative'}">
+                            ${sale.profitto_totale >= 0 ? '+' : ''}€${sale.profitto_totale.toFixed(2)}
+                        </span>
                     </div>
                     <div class="item-details">
-                        <strong>Vendita:</strong> €${parseFloat(sale.prezzo_totale_vendita).toFixed(2)} totale<br>
-                        <strong>Profitto per socio:</strong> €${(parseFloat(sale.profitto_totale) / 3).toFixed(2)} ciascuno<br>
+                        <strong>Vendita:</strong> €${sale.prezzo_totale_vendita.toFixed(2)} totale<br>
+                        <strong>Profitto per socio:</strong> €${(sale.profitto_totale / 3).toFixed(2)} ciascuno<br>
                         <strong>Venduto a:</strong> ${sale.venduto_a}<br>
                         <strong>Data:</strong> ${new Date(sale.data).toLocaleDateString('it-IT')}
                     </div>
                 </div>
             `).join('');
             
-            document.getElementById('reportsContent').innerHTML = statsHtml + '<h3 style="color: #FFD700; margin: 20px 0; text-align: center;">📈 Vendite Recenti</h3>' + (salesHtml || '<p>Nessuna vendita</p>');
+            document.getElementById('reportsContent').innerHTML = 
+                statsHtml + 
+                '<h3 style="color: #FFD700; margin: 20px 0; text-align: center;">📈 Vendite Recenti</h3>' + 
+                (salesHtml || '<p style="text-align: center; color: #ccc; padding: 40px;">📭 Nessuna vendita registrata</p>');
+                
         } else {
             showMessage('❌ ' + result.message, 'error');
         }
     } catch (error) {
+        console.error('❌ Errore completo loadSalesReport:', error);
         showMessage('❌ Errore caricamento report: ' + error.toString(), 'error');
     }
     
