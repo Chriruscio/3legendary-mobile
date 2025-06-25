@@ -1936,7 +1936,7 @@ function filterProductsByCategory(categoryId) {
                         </div>
                     </div>
                     <div class="item-actions">
-                        <button class="action-btn btn-sell">📈 Vendi</button>
+                        <button class="action-btn btn-sell" onclick="sellItem('${item.id}', '${item.descrizione}', ${item.quantita_disponibile}, ${item.prezzo_unitario})">📈 Vendi</button>
                         <button class="action-btn btn-edit" onclick="editItem('${item.id}')">✏️ Modifica</button>
                         <button class="action-btn btn-unify" onclick="selectForUnify('${item.id}', '${item.descrizione}')">🔗 Unifica</button>
                         <button class="action-btn btn-delete" onclick="deleteItem('${item.id}')">🗑️ Elimina</button>
@@ -2438,7 +2438,7 @@ function filterInventory(filterType) {
                         </div>
                     </div>
                     <div class="item-actions">
-                        <button class="action-btn btn-sell">📈 Vendi</button>
+                        <button class="action-btn btn-sell" onclick="sellItem('${item.id}', '${item.descrizione}', ${item.quantita_disponibile}, ${item.prezzo_unitario})">📈 Vendi</button>
                         <button class="action-btn btn-edit" onclick="editItem('${item.id}')">✏️ Modifica</button>
                         <button class="action-btn btn-unify" onclick="selectForUnify('${item.id}', '${item.descrizione}')">🔗 Unifica</button>
                         <button class="action-btn btn-delete" onclick="deleteItem('${item.id}')">🗑️ Elimina</button>
@@ -2731,7 +2731,7 @@ const vendereHtml = result.data.daVendere.map(item => `
             </div>
         </div>
         <div class="item-actions">
-            <button class="action-btn btn-sell">📈 Vendi</button>
+            <button class="action-btn btn-sell" onclick="sellItem('${item.id}', '${item.descrizione}', ${item.quantita_disponibile}, ${item.prezzo_unitario})">📈 Vendi</button>
             <button class="action-btn btn-edit" onclick="editItem('${item.id}')">✏️ Modifica</button>
             <button class="action-btn btn-unify" onclick="selectForUnify('${item.id}', '${item.descrizione}')">🔗 Unifica</button>
             <button class="action-btn btn-delete" onclick="deleteItem('${item.id}')">🗑️ Elimina</button>
@@ -3580,7 +3580,189 @@ function debugCategories() {
 }
 
 // Chiama questa funzione dalla console del browser per fare debug
-// debugCategories();      
+// debugCategories(); 
+     // 🚀 PASSO 1: AGGIUNGI QUESTE FUNZIONI ALLA FINE DEL TUO JAVASCRIPT
+
+// FUNZIONE PRINCIPALE PER APRIRE MODAL VENDITA
+function sellItem(itemId, itemName, availableQty, unitPrice) {
+    if (availableQty <= 0) {
+        showMessage('❌ Oggetto esaurito!', 'error');
+        return;
+    }
+    
+    const modalHtml = `
+        <div id="sellModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;">
+            <div style="background: #1a1a1a; padding: 30px; border-radius: 15px; max-width: 500px; width: 100%; border: 3px solid #FFD700; max-height: 90vh; overflow-y: auto;">
+                <h3 style="color: #FFD700; text-align: center; margin-bottom: 20px; font-size: 1.4em;">📈 Vendi Oggetto</h3>
+                
+                <!-- INFO OGGETTO -->
+                <div style="background: rgba(255,215,0,0.15); padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #FFD700;">
+                    <div style="color: #FFD700; font-weight: bold; margin-bottom: 8px;">🎴 Prodotto Selezionato:</div>
+                    <div style="color: #fff; font-size: 1.1em; margin-bottom: 8px;">"${itemName}"</div>
+                    <div style="color: #ccc; font-size: 0.9em;">
+                        📦 Disponibili: <strong>${availableQty}</strong> pezzi<br>
+                        💰 Prezzo acquisto: <strong>€${parseFloat(unitPrice).toFixed(2)}</strong> cadauno
+                    </div>
+                </div>
+                
+                <!-- FORM VENDITA -->
+                <form id="quickSellForm">
+                    <input type="hidden" name="item_id" value="${itemId}">
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="color: #FFD700; display: block; margin-bottom: 8px; font-weight: bold;">📦 Quantità da vendere:</label>
+                        <input type="number" name="quantita_vendita" min="1" max="${availableQty}" value="1" required 
+                               style="width: 100%; padding: 12px; border: 2px solid #8B0000; border-radius: 8px; background: #000; color: #fff; font-size: 16px;"
+                               onchange="updateQuickSalePreview('${itemId}', ${unitPrice})">
+                    </div>
+                    
+                    <!-- SISTEMA PREZZO DOPPIO VENDITE -->
+                    <div style="background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(139,0,0,0.15)); border: 2px solid #FFD700; border-radius: 15px; padding: 20px; margin: 20px 0; position: relative;">
+                        <div style="position: absolute; top: -10px; right: 20px; background: #FFD700; color: #000; padding: 5px 10px; border-radius: 15px; font-size: 0.8em; font-weight: bold;">🔄 SYNC</div>
+                        <div style="color: #FFD700; font-weight: bold; font-size: 1.1em; margin-bottom: 15px; text-align: center;">💰 Prezzo di Vendita</div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                            <div style="position: relative;">
+                                <label style="color: #FFD700; margin-bottom: 8px; display: block; font-size: 0.9em;">💵 Ricavo TOTALE</label>
+                                <input type="number" id="quickSalePriceTotal" name="prezzo_totale_vendita" step="0.01" placeholder="0.00" required
+                                       style="padding-right: 45px; font-size: 18px; font-weight: bold; background: rgba(0,0,0,0.9); color: #fff; border: 2px solid #8B0000; border-radius: 8px; width: 100%; padding: 12px;"
+                                       onchange="calculateQuickSaleFromTotal('${itemId}', ${unitPrice})" oninput="calculateQuickSaleFromTotal('${itemId}', ${unitPrice})">
+                                <span style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #FFD700; font-weight: bold; pointer-events: none; margin-top: 12px;">€</span>
+                            </div>
+                            <div style="position: relative;">
+                                <label style="color: #FFD700; margin-bottom: 8px; display: block; font-size: 0.9em;">💎 Prezzo SINGOLO</label>
+                                <input type="number" id="quickSalePriceSingle" step="0.01" placeholder="0.00" required
+                                       style="padding-right: 45px; font-size: 18px; font-weight: bold; background: rgba(0,0,0,0.9); color: #fff; border: 2px solid #8B0000; border-radius: 8px; width: 100%; padding: 12px;"
+                                       onchange="calculateQuickSaleFromSingle('${itemId}', ${unitPrice})" oninput="calculateQuickSaleFromSingle('${itemId}', ${unitPrice})">
+                                <span style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #FFD700; font-weight: bold; pointer-events: none; margin-top: 12px;">€</span>
+                            </div>
+                        </div>
+                        
+                        <div style="background: rgba(0,0,0,0.6); border-radius: 10px; padding: 15px; text-align: center; border: 1px solid rgba(255,215,0,0.3);">
+                            <div style="font-size: 1.1em; color: #90EE90; font-weight: bold; line-height: 1.4;" id="quickSalePreview">Inserisci quantità e prezzo</div>
+                            <div style="font-size: 0.9em; color: #ccc; margin-top: 5px;" id="quickSaleDetail"></div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="color: #FFD700; display: block; margin-bottom: 8px; font-weight: bold;">👤 Venduto a:</label>
+                        <input type="text" name="venduto_a" placeholder="Cliente, eBay, Vinted..." required 
+                               style="width: 100%; padding: 12px; border: 2px solid #8B0000; border-radius: 8px; background: #000; color: #fff; font-size: 16px;">
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="color: #FFD700; display: block; margin-bottom: 8px; font-weight: bold;">📅 Data vendita:</label>
+                        <input type="date" name="data_vendita" value="${new Date().toISOString().split('T')[0]}" required 
+                               style="width: 100%; padding: 12px; border: 2px solid #8B0000; border-radius: 8px; background: #000; color: #fff; font-size: 16px;">
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" style="flex: 1; padding: 15px; background: linear-gradient(135deg, #006400, #32CD32); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1em;">💰 Conferma Vendita</button>
+                        <button type="button" onclick="closeSellModal()" style="flex: 1; padding: 15px; background: #666; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1em;">❌ Annulla</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Aggiungi event listener al form
+    document.getElementById('quickSellForm').addEventListener('submit', handleQuickSell);
+}
+
+// CALCOLI PREZZO NEL MODAL
+let isCalculatingQuickSale = false;
+
+function calculateQuickSaleFromTotal(itemId, costPrice) {
+    if (isCalculatingQuickSale) return;
+    isCalculatingQuickSale = true;
+    
+    const quantity = parseInt(document.querySelector('input[name="quantita_vendita"]').value) || 0;
+    const totalPrice = parseFloat(document.getElementById('quickSalePriceTotal').value) || 0;
+    
+    if (quantity > 0 && totalPrice > 0) {
+        const singlePrice = totalPrice / quantity;
+        document.getElementById('quickSalePriceSingle').value = singlePrice.toFixed(2);
+        updateQuickSalePreviewCalc(quantity, totalPrice, singlePrice, costPrice);
+    }
+    
+    isCalculatingQuickSale = false;
+}
+
+function calculateQuickSaleFromSingle(itemId, costPrice) {
+    if (isCalculatingQuickSale) return;
+    isCalculatingQuickSale = true;
+    
+    const quantity = parseInt(document.querySelector('input[name="quantita_vendita"]').value) || 0;
+    const singlePrice = parseFloat(document.getElementById('quickSalePriceSingle').value) || 0;
+    
+    if (quantity > 0 && singlePrice > 0) {
+        const totalPrice = Math.round((quantity * singlePrice) * 100) / 100;
+        document.getElementById('quickSalePriceTotal').value = totalPrice.toFixed(2);
+        updateQuickSalePreviewCalc(quantity, totalPrice, singlePrice, costPrice);
+    }
+    
+    isCalculatingQuickSale = false;
+}
+
+function updateQuickSalePreview(itemId, costPrice) {
+    const totalPrice = parseFloat(document.getElementById('quickSalePriceTotal').value) || 0;
+    if (totalPrice > 0) {
+        calculateQuickSaleFromTotal(itemId, costPrice);
+    } else {
+        const singlePrice = parseFloat(document.getElementById('quickSalePriceSingle').value) || 0;
+        if (singlePrice > 0) {
+            calculateQuickSaleFromSingle(itemId, costPrice);
+        }
+    }
+}
+
+function updateQuickSalePreviewCalc(quantity, totalSalePrice, singleSalePrice, costPrice) {
+    const totalCost = quantity * costPrice;
+    const totalProfit = totalSalePrice - totalCost;
+    const profitPercentage = totalCost > 0 ? ((totalProfit / totalCost) * 100).toFixed(1) : 0;
+    
+    const profitColor = totalProfit >= 0 ? '#90EE90' : '#FFB6C1';
+    const profitSign = totalProfit >= 0 ? '+' : '';
+    
+    document.getElementById('quickSalePreview').innerHTML = 
+        `📈 <strong>${quantity}x</strong> a <strong>€${singleSalePrice.toFixed(2)}</strong> = <strong>€${totalSalePrice.toFixed(2)}</strong> ricavo`;
+    
+    document.getElementById('quickSaleDetail').innerHTML = 
+        `💰 Costo: €${totalCost.toFixed(2)} • ` +
+        `<span style="color: ${profitColor}">Profitto: <strong>${profitSign}€${totalProfit.toFixed(2)}</strong> (${profitSign}${profitPercentage}%)</span><br>` +
+        `💎 Profitto per socio: €${(totalProfit / 3).toFixed(2)} cadauno`;
+}
+
+// GESTIONE SUBMIT VENDITA RAPIDA
+async function handleQuickSell(e) {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(e.target));
+    
+    showMessage('⏳ Registrando vendita...', 'success');
+    
+    try {
+        const result = await apiCall('addSale', data);
+        
+        if (result.success) {
+            showMessage(result.message, 'success');
+            closeSellModal();
+            invalidateInventoryCache();
+            loadInventory(); // Ricarica inventario aggiornato
+        } else {
+            showMessage('❌ ' + result.message, 'error');
+        }
+    } catch (error) {
+        showMessage('❌ Errore: ' + error.message, 'error');
+    }
+}
+
+// CHIUDI MODAL VENDITA
+function closeSellModal() {
+    const modal = document.getElementById('sellModal');
+    if (modal) modal.remove();
+}   
 </script>
 </body>
 </html>
