@@ -2317,7 +2317,7 @@ function generateSearchResultsHTML(items, searchTerm, type) {
                     </div>
                 </div>
                 <div class="item-actions">
-                    ${!isInterno ? '<button class="action-btn btn-sell">📈 Vendi</button>' : ''}
+                    ${!isInterno ? '<button class="action-btn btn-sell" onclick="sellItem('${item.id}', '${item.descrizione}', ${item.quantita_disponibile}, ${item.prezzo_unitario})">📈 Vendi</button>' : ''}
                     <button class="action-btn btn-edit" onclick="editItem('${item.id}')">✏️ Modifica</button>
                     ${!isInterno ? `<button class="action-btn btn-unify" onclick="selectForUnify('${item.id}', '${item.descrizione}')">🔗 Unifica</button>` : ''}
                     <button class="action-btn btn-delete" onclick="deleteItem('${item.id}')">🗑️ Elimina</button>
