@@ -3722,7 +3722,7 @@ function sellItem(itemId, itemName, availableQty, unitPrice) {
         showMessage('❌ Oggetto esaurito!', 'error');
         return;
     }
-    
+    isCalculatingQuickSale = false;
     const modalHtml = `
         <div id="sellModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;">
             <div style="background: #1a1a1a; padding: 30px; border-radius: 15px; max-width: 500px; width: 100%; border: 3px solid #FFD700; max-height: 90vh; overflow-y: auto;">
@@ -3746,7 +3746,7 @@ function sellItem(itemId, itemName, availableQty, unitPrice) {
                         <label style="color: #FFD700; display: block; margin-bottom: 8px; font-weight: bold;">📦 Quantità da vendere:</label>
                         <input type="number" name="quantita_vendita" min="1" max="${availableQty}" value="1" required 
                                style="width: 100%; padding: 12px; border: 2px solid #8B0000; border-radius: 8px; background: #000; color: #fff; font-size: 16px;"
-                               onchange="updateQuickSalePreview('${itemId}', ${unitPrice})">
+                               onchange="updateQuickSalePreview('${itemId}', ${unitPrice})" oninput="updateQuickSalePreview('${itemId}', ${unitPrice})">
                     </div>
                     
                     <!-- SISTEMA PREZZO DOPPIO VENDITE -->
@@ -3844,16 +3844,23 @@ function calculateQuickSaleFromSingle(itemId, costPrice) {
 }
 
 function updateQuickSalePreview(itemId, costPrice) {
+    console.log('🔄 updateQuickSalePreview chiamata - ItemId:', itemId, 'CostPrice:', costPrice);
+    
+    const quantity = parseInt(document.querySelector('input[name="quantita_vendita"]').value) || 0;
     const totalPrice = parseFloat(document.getElementById('quickSalePriceTotal').value) || 0;
+    const singlePrice = parseFloat(document.getElementById('quickSalePriceSingle').value) || 0;
+    
+    console.log('📊 Valori attuali Modal - Qty:', quantity, 'Total:', totalPrice, 'Single:', singlePrice);
+    
     if (totalPrice > 0) {
+        console.log('🎯 Ricalcolando da totale...');
         calculateQuickSaleFromTotal(itemId, costPrice);
+    } else if (singlePrice > 0) {
+        console.log('🎯 Ricalcolando da singolo...');
+        calculateQuickSaleFromSingle(itemId, costPrice);
     } else {
-        const singlePrice = parseFloat(document.getElementById('quickSalePriceSingle').value) || 0;
-        if (singlePrice > 0) {
-            calculateQuickSaleFromSingle(itemId, costPrice);
-        } else {
-            clearQuickSalePreview();
-        }
+        console.log('⚠️ Nessun prezzo inserito nel modal');
+        clearQuickSalePreview();
     }
 }
 
