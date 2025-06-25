@@ -2792,6 +2792,7 @@ updateCategoryCounters(); // ← AGGIUNGI QUESTA RIGA
 document.getElementById('inventoryLoading').style.display = 'none';
 }
 // CARICA OGGETTI VENDIBILI NEL DROPDOWN
+
 function loadSalesItems() {
     apiCall('getInventory').then(result => {
         const select = document.getElementById('salesItemSelect');
@@ -2800,7 +2801,7 @@ function loadSalesItems() {
         if (result.success && result.data && result.data.daVendere) {
             result.data.daVendere.forEach(item => {
                 if (item.quantita_disponibile > 0) {
-                    options += `<option value="${item.id}">${item.descrizione} (${item.quantita_disponibile} disp. - €${parseFloat(item.prezzo_unitario).toFixed(2)} cad.)</option>`;
+                    options += `<option value="${item.id}" data-price="${item.prezzo_unitario}" data-available="${item.quantita_disponibile}">${item.descrizione} (${item.quantita_disponibile} disp. - €${parseFloat(item.prezzo_unitario).toFixed(2)} cad.)</option>`;
                 }
             });
         }
