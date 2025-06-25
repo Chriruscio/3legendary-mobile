@@ -3808,18 +3808,18 @@ function sellItem(itemId, itemName, availableQty, unitPrice) {
 let isCalculatingQuickSale = false;
 
 function calculateQuickSaleFromTotal(itemId, costPrice) {
-    // USA LA STESSA LOGICA DEL TAB VENDITE
     if (isCalculatingSale) return;
     isCalculatingSale = true;
     
-    const quantity = parseInt(document.querySelector('input[name="quantita_vendita"]').value) || 1;
+    // FORZA LA LETTURA DAL MODAL
+    const quantity = parseInt(document.querySelector('#sellModal input[name="quantita_vendita"]').value) || 1;
     const totalPrice = parseFloat(document.getElementById('quickSalePriceTotal').value) || 0;
+    
+    console.log('🔥 MODAL CALCOLO - Qty:', quantity, 'Total:', totalPrice);
     
     if (quantity > 0 && totalPrice > 0) {
         const singlePrice = totalPrice / quantity;
         document.getElementById('quickSalePriceSingle').value = singlePrice.toFixed(2);
-        
-        // USA LA STESSA FUNZIONE DEL TAB VENDITE
         updateQuickSalePreviewCalc(quantity, totalPrice, singlePrice, costPrice);
     } else {
         clearQuickSalePreview();
@@ -3828,19 +3828,20 @@ function calculateQuickSaleFromTotal(itemId, costPrice) {
     isCalculatingSale = false;
 }
 
+
 function calculateQuickSaleFromSingle(itemId, costPrice) {
-    // USA LA STESSA LOGICA DEL TAB VENDITE
     if (isCalculatingSale) return;
     isCalculatingSale = true;
     
-    const quantity = parseInt(document.querySelector('input[name="quantita_vendita"]').value) || 1;
+    // FORZA LA LETTURA DAL MODAL
+    const quantity = parseInt(document.querySelector('#sellModal input[name="quantita_vendita"]').value) || 1;
     const singlePrice = parseFloat(document.getElementById('quickSalePriceSingle').value) || 0;
+    
+    console.log('🔥 MODAL CALCOLO - Qty:', quantity, 'Single:', singlePrice);
     
     if (quantity > 0 && singlePrice > 0) {
         const totalPrice = Math.round((quantity * singlePrice) * 100) / 100;
         document.getElementById('quickSalePriceTotal').value = totalPrice.toFixed(2);
-        
-        // USA LA STESSA FUNZIONE DEL TAB VENDITE
         updateQuickSalePreviewCalc(quantity, totalPrice, singlePrice, costPrice);
     } else {
         clearQuickSalePreview();
