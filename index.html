@@ -3108,25 +3108,29 @@ const safeStats = {
             console.log('🛡️ Stats sicure:', safeStats);
             
             const statsHtml = `
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value">€${safeStats.totalRevenue.toFixed(2)}</div>
-                        <div class="stat-label">Ricavo Totale</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">€${safeStats.totalProfit.toFixed(2)}</div>
-                        <div class="stat-label">Profitto Totale</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${safeStats.avgROI.toFixed(1)}%</div>
-                        <div class="stat-label">ROI Medio</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${safeStats.itemsSold}</div>
-                        <div class="stat-label">Oggetti Venduti</div>
-                    </div>
-                </div>
-            `;
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">€${safeStats.totalRevenue.toFixed(2)}</div>
+            <div class="stat-label">Ricavo Totale</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">€${safeStats.totalProfit.toFixed(2)}</div>
+            <div class="stat-label">Profitto Totale</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">€${(safeStats.totalProfit / 3).toFixed(2)}</div>
+            <div class="stat-label">Profitto per Socio</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">${safeStats.avgROI.toFixed(1)}%</div>
+            <div class="stat-label">ROI Medio</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">${safeStats.itemsSold}</div>
+            <div class="stat-label">Oggetti Venduti</div>
+        </div>
+    </div>
+`;
             
             // 🛡️ PROTEZIONE ANCHE PER LE VENDITE INDIVIDUALI
             const safeSales = (sales || []).map(sale => ({
@@ -3138,22 +3142,28 @@ const safeStats = {
                 data: sale.data || new Date().toISOString()
             }));
             
-            const salesHtml = safeSales.slice(-5).reverse().map(sale => `
-                <div class="item-card">
-                    <div class="item-header">
-                        <span class="item-name">${sale.quantita}x ${sale.oggetto}</span>
-                        <span class="profit-${sale.profitto_totale >= 0 ? 'positive' : 'negative'}">
-                            ${sale.profitto_totale >= 0 ? '+' : ''}€${sale.profitto_totale.toFixed(2)}
-                        </span>
-                    </div>
-                    <div class="item-details">
-                        <strong>Vendita:</strong> €${sale.prezzo_totale_vendita.toFixed(2)} totale<br>
-                        <strong>Profitto per socio:</strong> €${(sale.profitto_totale / 3).toFixed(2)} ciascuno<br>
-                        <strong>Venduto a:</strong> ${sale.venduto_a}<br>
-                        <strong>Data:</strong> ${new Date(sale.data).toLocaleDateString('it-IT')}
-                    </div>
-                </div>
-            `).join('');
+            const salesHtml = safeSales.slice(-5).reverse().map(sale => {
+    // Calcola percentuale di profitto
+    const costPrice = sale.prezzo_totale_vendita - sale.profitto_totale;
+    const profitPercentage = costPrice > 0 ? ((sale.profitto_totale / costPrice) * 100).toFixed(1) : 0;
+    
+    return `
+        <div class="item-card">
+            <div class="item-header">
+                <span class="item-name">${sale.quantita}x ${sale.oggetto}</span>
+                <span class="profit-${sale.profitto_totale >= 0 ? 'positive' : 'negative'}">
+                    ${sale.profitto_totale >= 0 ? '+' : ''}€${sale.profitto_totale.toFixed(2)}
+                </span>
+            </div>
+            <div class="item-details">
+                <strong>Vendita:</strong> €${sale.prezzo_totale_vendita.toFixed(2)} totale<br>
+                <strong>Profitto:</strong> ${sale.profitto_totale >= 0 ? '+' : ''}€${sale.profitto_totale.toFixed(2)} (${sale.profitto_totale >= 0 ? '+' : ''}${profitPercentage}%)<br>
+                <strong>Venduto a:</strong> ${sale.venduto_a}<br>
+                <strong>Data:</strong> ${new Date(sale.data).toLocaleDateString('it-IT')}
+            </div>
+        </div>
+    `;
+}).join('');
             
             document.getElementById('reportsContent').innerHTML = 
                 statsHtml + 
