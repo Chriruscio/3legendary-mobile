@@ -2277,6 +2277,9 @@ function searchInCachedData(data, normalizedSearchTerm, originalSearchTerm) {
 }
 
 // 🎨 GENERA HTML RISULTATI (FUNZIONE SEPARATA PER OTTIMIZZAZIONE)
+// 🔧 CERCA QUESTA FUNZIONE NEL TUO CODICE E SOSTITUISCILA:
+
+// 🎨 GENERA HTML RISULTATI (FUNZIONE SEPARATA PER OTTIMIZZAZIONE)
 function generateSearchResultsHTML(items, searchTerm, type) {
     if (!items || items.length === 0) {
         return `<p style="text-align: center; color: #ccc; padding: 40px;">🔍 Nessun risultato ${type === 'interno' ? 'uso interno ' : ''}per "${searchTerm}"</p>`;
@@ -2317,7 +2320,7 @@ function generateSearchResultsHTML(items, searchTerm, type) {
                     </div>
                 </div>
                 <div class="item-actions">
-                    ${!isInterno ? '<button class="action-btn btn-sell" onclick="sellItem('${item.id}', '${item.descrizione}', ${item.quantita_disponibile}, ${item.prezzo_unitario})">📈 Vendi</button>' : ''}
+                    ${!isInterno ? `<button class="action-btn btn-sell" onclick="sellItem('${item.id}', '${item.descrizione}', ${item.quantita_disponibile}, ${item.prezzo_unitario})">📈 Vendi</button>` : ''}
                     <button class="action-btn btn-edit" onclick="editItem('${item.id}')">✏️ Modifica</button>
                     ${!isInterno ? `<button class="action-btn btn-unify" onclick="selectForUnify('${item.id}', '${item.descrizione}')">🔗 Unifica</button>` : ''}
                     <button class="action-btn btn-delete" onclick="deleteItem('${item.id}')">🗑️ Elimina</button>
