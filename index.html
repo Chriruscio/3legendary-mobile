@@ -3846,7 +3846,7 @@ function calculateQuickSaleFromSingle(itemId, costPrice) {
 function updateQuickSalePreview(itemId, costPrice) {
     console.log('🔄 updateQuickSalePreview chiamata - ItemId:', itemId, 'CostPrice:', costPrice);
     
-    const quantity = parseInt(document.querySelector('input[name="quantita_vendita"]').value) || 0;
+    const quantity = parseInt(document.querySelector('input[name="quantita_vendita"]').value) || 1;
     const totalPrice = parseFloat(document.getElementById('quickSalePriceTotal').value) || 0;
     const singlePrice = parseFloat(document.getElementById('quickSalePriceSingle').value) || 0;
     
