@@ -3688,6 +3688,8 @@ function calculateQuickSaleFromTotal(itemId, costPrice) {
         const singlePrice = totalPrice / quantity;
         document.getElementById('quickSalePriceSingle').value = singlePrice.toFixed(2);
         updateQuickSalePreviewCalc(quantity, totalPrice, singlePrice, costPrice);
+    } else {
+        clearQuickSalePreview();
     }
     
     isCalculatingQuickSale = false;
@@ -3704,6 +3706,8 @@ function calculateQuickSaleFromSingle(itemId, costPrice) {
         const totalPrice = Math.round((quantity * singlePrice) * 100) / 100;
         document.getElementById('quickSalePriceTotal').value = totalPrice.toFixed(2);
         updateQuickSalePreviewCalc(quantity, totalPrice, singlePrice, costPrice);
+    } else {
+        clearQuickSalePreview();
     }
     
     isCalculatingQuickSale = false;
@@ -3717,6 +3721,8 @@ function updateQuickSalePreview(itemId, costPrice) {
         const singlePrice = parseFloat(document.getElementById('quickSalePriceSingle').value) || 0;
         if (singlePrice > 0) {
             calculateQuickSaleFromSingle(itemId, costPrice);
+        } else {
+            clearQuickSalePreview();
         }
     }
 }
@@ -3760,7 +3766,10 @@ async function handleQuickSell(e) {
         showMessage('❌ Errore: ' + error.message, 'error');
     }
 }
-
+function clearQuickSalePreview() {
+    document.getElementById('quickSalePreview').innerHTML = 'Inserisci quantità e prezzo';
+    document.getElementById('quickSaleDetail').innerHTML = '';
+}
 // CHIUDI MODAL VENDITA
 function closeSellModal() {
     const modal = document.getElementById('sellModal');
