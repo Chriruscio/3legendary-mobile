@@ -3811,15 +3811,13 @@ function calculateQuickSaleFromTotal(itemId, costPrice) {
     if (isCalculatingQuickSale) return;
     isCalculatingQuickSale = true;
     
-    const quantity = parseInt(document.querySelector('input[name="quantita_vendita"]').value) || 0;
+    const quantity = parseInt(document.querySelector('input[name="quantita_vendita"]').value) || 1;
     const totalPrice = parseFloat(document.getElementById('quickSalePriceTotal').value) || 0;
     
     if (quantity > 0 && totalPrice > 0) {
         const singlePrice = totalPrice / quantity;
         document.getElementById('quickSalePriceSingle').value = singlePrice.toFixed(2);
         updateQuickSalePreviewCalc(quantity, totalPrice, singlePrice, costPrice);
-    } else {
-        clearQuickSalePreview();
     }
     
     isCalculatingQuickSale = false;
@@ -3829,15 +3827,13 @@ function calculateQuickSaleFromSingle(itemId, costPrice) {
     if (isCalculatingQuickSale) return;
     isCalculatingQuickSale = true;
     
-    const quantity = parseInt(document.querySelector('input[name="quantita_vendita"]').value) || 0;
+    const quantity = parseInt(document.querySelector('input[name="quantita_vendita"]').value) || 1;
     const singlePrice = parseFloat(document.getElementById('quickSalePriceSingle').value) || 0;
     
     if (quantity > 0 && singlePrice > 0) {
-        const totalPrice = Math.round((quantity * singlePrice) * 100) / 100;
+        const totalPrice = quantity * singlePrice;
         document.getElementById('quickSalePriceTotal').value = totalPrice.toFixed(2);
         updateQuickSalePreviewCalc(quantity, totalPrice, singlePrice, costPrice);
-    } else {
-        clearQuickSalePreview();
     }
     
     isCalculatingQuickSale = false;
