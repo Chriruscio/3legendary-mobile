@@ -3811,7 +3811,9 @@ function calculateQuickSaleFromTotal(itemId, costPrice) {
     if (isCalculatingQuickSale) return;
     isCalculatingQuickSale = true;
     
-    const quantity = parseInt(document.querySelector('input[name="quantita_vendita"]').value) || 1;
+    const quantityInput = document.querySelector('input[name="quantita_vendita"]');
+const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
+console.log('🔢 TOTALE - Quantità letta:', quantity, 'dal campo:', quantityInput?.value);
     const totalPrice = parseFloat(document.getElementById('quickSalePriceTotal').value) || 0;
     
     if (quantity > 0 && totalPrice > 0) {
@@ -3827,7 +3829,9 @@ function calculateQuickSaleFromSingle(itemId, costPrice) {
     if (isCalculatingQuickSale) return;
     isCalculatingQuickSale = true;
     
-    const quantity = parseInt(document.querySelector('input[name="quantita_vendita"]').value) || 1;
+    const quantityInput = document.querySelector('input[name="quantita_vendita"]');
+    const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
+    console.log('🔢 SINGOLO - Quantità letta:', quantity, 'dal campo:', quantityInput?.value);
     const singlePrice = parseFloat(document.getElementById('quickSalePriceSingle').value) || 0;
     
     if (quantity > 0 && singlePrice > 0) {
