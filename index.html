@@ -33,9 +33,8 @@
         .container {
     max-width: 100%;
     margin: 0;
-    background: rgba(0,0,0,0.4); /* Più trasparente per vedere i Pokémon */
+    background: rgba(0,0,0,0.1); /* MOLTO più trasparente */
     min-height: 100vh;
-    backdrop-filter: blur(1px); /* Blur leggero per eleganza */
 }
         
         .header {
@@ -74,31 +73,31 @@
 }
 
 .custom-logo {
-    width: 160px;          /* ← PIÙ GROSSO */
-    height: 120px;         /* ← PIÙ GROSSO */
-    border-radius: 25px;   /* ← PIÙ ARROTONDATO */
-    border: 4px solid #FFD700;
+    width: 200px;          /* ← PIÙ GROSSO */
+    height: 200px;         /* ← QUADRATO per farlo rotondo */
+    border-radius: 50%;    /* ← PERFETTAMENTE ROTONDO */
+    border: 5px solid #FFD700; /* ← BORDO PIÙ SPESSO */
     box-shadow: 
-        0 0 30px rgba(255,215,0,0.8),
-        0 0 60px rgba(255,0,0,0.4);
+        0 0 40px rgba(255,215,0,0.9),
+        0 0 80px rgba(255,0,0,0.5);
     animation: legendaryGlow 3s ease-in-out infinite alternate;
-    object-fit: cover;     /* ← RIMUOVE SFONDO BIANCO */
-    background: transparent; /* ← NIENTE SFONDO */
-    padding: 8px;
-    filter: contrast(1.1) saturate(1.2); /* ← COLORI PIÙ VIVACI */
+    object-fit: cover;
+    background: transparent;
+    padding: 0;            /* ← NIENTE PADDING per riempire tutto */
+    filter: contrast(1.1) saturate(1.2);
 }
 
 @keyframes legendaryGlow {
     from { 
         box-shadow: 
-            0 0 20px rgba(255,215,0,0.6),
-            0 0 40px rgba(255,0,0,0.3);
+            0 0 30px rgba(255,215,0,0.7),
+            0 0 60px rgba(255,0,0,0.4);
         transform: scale(1);
     }
     to { 
         box-shadow: 
-            0 0 35px rgba(255,215,0,0.9),
-            0 0 70px rgba(255,0,0,0.5);
+            0 0 50px rgba(255,215,0,1),
+            0 0 100px rgba(255,0,0,0.6);
         transform: scale(1.05);
     }
 }
