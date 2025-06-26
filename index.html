@@ -17,21 +17,26 @@
         }
         
         body {
-            font-family: 'Arial Black', Arial, sans-serif;
-            background: linear-gradient(135deg, #000000 0%, #2d1810 50%, #8B0000 100%);
-            color: #fff;
-            min-height: 100vh;
-            overflow-x: hidden;
-            padding: 0;
-            margin: 0;
-        }
+    font-family: 'Arial Black', Arial, sans-serif;
+    background: 
+        /* Overlay scuro per leggibilità */
+        linear-gradient(135deg, rgba(0,0,0,0.85) 0%, rgba(45,24,16,0.9) 50%, rgba(139,0,0,0.85) 100%),
+        /* Il tuo sfondo Pokémon leggendari */
+        url('https://i.postimg.cc/fLfvhFdt/HD-wallpaper-legendary-pokemon-mythical-thumbnail.jpg') center/cover fixed;
+    color: #fff;
+    min-height: 100vh;
+    overflow-x: hidden;
+    padding: 0;
+    margin: 0;
+}
         
         .container {
-            max-width: 100%;
-            margin: 0;
-            background: rgba(0,0,0,0.95);
-            min-height: 100vh;
-        }
+    max-width: 100%;
+    margin: 0;
+    background: rgba(0,0,0,0.4); /* Più trasparente per vedere i Pokémon */
+    min-height: 100vh;
+    backdrop-filter: blur(1px); /* Blur leggero per eleganza */
+}
         
         .header {
             background: linear-gradient(135deg, #8B0000, #FF0000);
