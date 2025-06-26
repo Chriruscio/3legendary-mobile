@@ -19,14 +19,18 @@
         body {
     font-family: 'Arial Black', Arial, sans-serif;
     /* 🔥 SOLO L'IMMAGINE - NESSUN OVERLAY! */
-    background: url('https://i.postimg.cc/fLfvhFdt/HD-wallpaper-legendary-pokemon-mythical-thumbnail.jpg') center/cover fixed;
+    /* 🔥 SFONDO FISSO E NITIDO */
+background: url('https://i.postimg.cc/Nf5hDhZj/5202-1080x1920-phone-full-hd-pokemon-go-wallpaper-image.jpg') center/cover fixed no-repeat;
+background-attachment: fixed;
+background-size: cover;
+background-position: center center;
     color: #fff;
     min-height: 100vh;
     overflow-x: hidden;
     padding: 0;
     margin: 0;
-}  margin: 0;
-}
+}  
+
         
     .container {
     max-width: 100%;
@@ -36,33 +40,16 @@
     min-height: 100vh;
 }
         
-        .header {
-    /* 🔥 HEADER SEMI-TRASPARENTE per vedere l'immagine */
-    background: linear-gradient(135deg, rgba(139,0,0,0.7), rgba(255,0,0,0.6));
+     .header {
+    /* 🔥 HEADER COMPLETAMENTE TRASPARENTE */
+    background: transparent;
     padding: 20px 15px;
     text-align: center;
     position: relative;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-    /* 🌟 EFFETTO VETRO */
-    backdrop-filter: blur(5px);
+    box-shadow: none;
 }
         
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: repeating-linear-gradient(
-                45deg,
-                transparent,
-                transparent 8px,
-                rgba(255,255,255,0.1) 8px,
-                rgba(255,255,255,0.1) 16px
-            );
-            pointer-events: none;
-        }
+    
         
         .logo-container {
     position: relative;
@@ -75,17 +62,18 @@
 }
 
 .custom-logo {
-    width: 150px;          /* ← PIÙ GROSSO */
-    height: 150px;         /* ← QUADRATO per farlo rotondo */
-    border-radius: 50%;    /* ← PERFETTAMENTE ROTONDO */
-    border: 5px solid #FFD700; /* ← BORDO PIÙ SPESSO */
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    border: 5px solid #FFD700;
     box-shadow: 
         0 0 40px rgba(255,215,0,0.9),
-        0 0 80px rgba(255,0,0,0.5);
+        0 0 80px rgba(255,0,0,0.5),
+        0 0 120px rgba(0,0,0,0.8); /* ← OMBRA NERA AGGIUNTA */
     animation: legendaryGlow 3s ease-in-out infinite alternate;
     object-fit: cover;
     background: transparent;
-    padding: 0;            /* ← NIENTE PADDING per riempire tutto */
+    padding: 0;
     filter: contrast(1.1) saturate(1.2);
 }
 
