@@ -58,38 +58,81 @@
         }
         
         .logo-container {
-            position: relative;
-            z-index: 2;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 10px;
-        }
-        
-        .logo-3legendary {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            border: 3px solid #FFD700;
-            box-shadow: 0 0 25px rgba(255,215,0,0.6);
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><defs><radialGradient id="sun" cx="50%" cy="35%"><stop offset="0%" stop-color="%23FF6B6B"/><stop offset="70%" stop-color="%23DC143C"/><stop offset="100%" stop-color="%238B0000"/></radialGradient><filter id="shadow"><feDropShadow dx="2" dy="2" stdDeviation="3" flood-opacity="0.3"/></filter></defs><circle cx="200" cy="140" r="90" fill="url(%23sun)" stroke="%23FFD700" stroke-width="2"/><g filter="url(%23shadow)"><path d="M80,180 Q60,160 40,180 Q50,200 70,220 Q90,240 120,235 Q140,230 150,210 Q160,190 145,170 Q130,155 115,165 Q100,175 90,185 Z" fill="%23000000" stroke="%23FFD700" stroke-width="2"/><path d="M70,175 Q80,165 90,175 Q95,185 85,195 Q75,205 65,195 Z" fill="%23FF0000"/><path d="M110,185 L130,175 L140,190 L125,200 Z" fill="%23000000"/></g><g filter="url(%23shadow)"><path d="M280,190 Q260,170 240,190 Q250,210 270,230 Q290,250 320,245 Q340,240 350,220 Q360,200 345,180 Q330,165 315,175 Q300,185 290,195 Z" fill="%23000000" stroke="%23FFD700" stroke-width="2"/><path d="M270,185 Q280,175 290,185 Q295,195 285,205 Q275,215 265,205 Z" fill="%23FF0000"/><path d="M310,195 L330,185 L340,200 L325,210 Z" fill="%23000000"/></g><rect x="80" y="320" width="240" height="45" rx="10" fill="%23000000" stroke="%23FFD700" stroke-width="3"/><text x="200" y="350" text-anchor="middle" fill="%23FF0000" font-size="32" font-weight="bold" font-family="Arial Black">3 LEGENDARY</text></svg>') center/cover;
-        }
-        
-        .header h1 {
-            font-size: 1.8em;
-            text-shadow: 3px 3px 6px rgba(0,0,0,0.8);
-            position: relative;
-            z-index: 2;
-            margin: 0;
-        }
-        
-        .legend-text {
-            background: linear-gradient(45deg, #FF0000, #FFD700);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 25px;
+    margin-bottom: 15px;
+}
+
+.custom-logo {
+    width: 120px;
+    height: 90px;
+    border-radius: 15px;
+    border: 3px solid #FFD700;
+    box-shadow: 
+        0 0 25px rgba(255,215,0,0.6),
+        0 0 50px rgba(255,0,0,0.3);
+    animation: legendaryGlow 3s ease-in-out infinite alternate;
+    object-fit: contain;
+    background: rgba(0,0,0,0.3);
+    padding: 5px;
+}
+
+@keyframes legendaryGlow {
+    from { 
+        box-shadow: 
+            0 0 20px rgba(255,215,0,0.6),
+            0 0 40px rgba(255,0,0,0.3);
+        transform: scale(1);
+    }
+    to { 
+        box-shadow: 
+            0 0 35px rgba(255,215,0,0.9),
+            0 0 70px rgba(255,0,0,0.5);
+        transform: scale(1.05);
+    }
+}
+
+.header h1 {
+    font-size: 2.4em;
+    text-shadow: 4px 4px 8px rgba(0,0,0,0.9);
+    position: relative;
+    z-index: 2;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.number-3 {
+    font-size: 1.3em;
+    color: #FFD700;
+    text-shadow: 
+        0 0 15px #FFD700,
+        0 0 30px #FFD700,
+        3px 3px 6px rgba(0,0,0,0.8);
+    font-weight: 900;
+}
+
+.legend-text {
+    background: linear-gradient(45deg, #FF0000, #FFD700, #FF0000, #8B0000);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 900;
+    text-shadow: none;
+    filter: drop-shadow(3px 3px 6px rgba(0,0,0,0.8));
+    animation: textShine 4s ease-in-out infinite;
+}
+
+@keyframes textShine {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
         
         .subtitle {
             position: relative;
@@ -1174,9 +1217,12 @@
     <div class="container">
         <div class="header">
             <div class="logo-container">
-                <div class="logo-3legendary"></div>
-                <h1>3 <span class="legend-text">LEGENDARY</span></h1>
-            </div>
+    <img src="https://i.postimg.cc/GtKkTy3X/Immagine-Whats-App-2025-06-14-ore-00-02-04-fc7b7146.jpg" alt="3 LEGENDARY Logo" class="custom-logo" id="legendaryLogo">
+    <h1>
+        <span class="number-3">3</span>
+        <span class="legend-text">LEGENDARY</span>
+    </h1>
+</div>
             <div class="subtitle">Sistema Mobile Pokémon</div>
         </div>
         
@@ -1595,7 +1641,7 @@
 
     <script>
         console.log('🔄 JavaScript INIZIATO!');
-alert('JavaScript funziona!');
+
         // 🆕 VERIFICA SE IL FORM ESISTE
 setTimeout(() => {
     const form = document.getElementById('expenseForm');
