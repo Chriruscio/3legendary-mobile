@@ -16,20 +16,31 @@
             -webkit-tap-highlight-color: transparent;
         }
         
-        body {
+      body {
     font-family: 'Arial Black', Arial, sans-serif;
-    /* 🔥 SOLO L'IMMAGINE - NESSUN OVERLAY! */
-    /* 🔥 SFONDO FISSO E NITIDO */
-background: url('https://i.postimg.cc/Nf5hDhZj/5202-1080x1920-phone-full-hd-pokemon-go-wallpaper-image.jpg') center/cover fixed no-repeat;
-background-attachment: fixed;
-background-size: cover;
-background-position: center center;
     color: #fff;
     min-height: 100vh;
     overflow-x: hidden;
     padding: 0;
     margin: 0;
-}  
+    position: relative;
+}
+
+/* 🔥 SFONDO FISSO UNIVERSALE CON PSEUDO-ELEMENTO */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('https://i.postimg.cc/Nf5hDhZj/5202-1080x1920-phone-full-hd-pokemon-go-wallpaper-image.jpg') center center no-repeat;
+    background-size: cover;
+    z-index: -1;
+    /* 🌟 ASSICURA QUALITÀ MASSIMA */
+    background-attachment: scroll;
+    will-change: transform;
+}
 
         
     .container {
