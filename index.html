@@ -18,32 +18,34 @@
         
         body {
     font-family: 'Arial Black', Arial, sans-serif;
-    background: 
-        /* Overlay scuro per leggibilità */
-        linear-gradient(135deg, rgba(0,0,0,0.85) 0%, rgba(45,24,16,0.9) 50%, rgba(139,0,0,0.85) 100%),
-        /* Il tuo sfondo Pokémon leggendari */
-        url('https://i.postimg.cc/fLfvhFdt/HD-wallpaper-legendary-pokemon-mythical-thumbnail.jpg') center/cover fixed;
+    /* 🔥 SOLO L'IMMAGINE - NESSUN OVERLAY! */
+    background: url('https://i.postimg.cc/fLfvhFdt/HD-wallpaper-legendary-pokemon-mythical-thumbnail.jpg') center/cover fixed;
     color: #fff;
     min-height: 100vh;
     overflow-x: hidden;
     padding: 0;
     margin: 0;
+}  margin: 0;
 }
         
-        .container {
+    .container {
     max-width: 100%;
     margin: 0;
-    background: rgba(0,0,0,0.1); /* MOLTO più trasparente */
+    /* 🔥 COMPLETAMENTE TRASPARENTE */
+    background: transparent;
     min-height: 100vh;
 }
         
         .header {
-            background: linear-gradient(135deg, #8B0000, #FF0000);
-            padding: 20px 15px;
-            text-align: center;
-            position: relative;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-        }
+    /* 🔥 HEADER SEMI-TRASPARENTE per vedere l'immagine */
+    background: linear-gradient(135deg, rgba(139,0,0,0.7), rgba(255,0,0,0.6));
+    padding: 20px 15px;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    /* 🌟 EFFETTO VETRO */
+    backdrop-filter: blur(5px);
+}
         
         .header::before {
             content: '';
@@ -73,8 +75,8 @@
 }
 
 .custom-logo {
-    width: 200px;          /* ← PIÙ GROSSO */
-    height: 200px;         /* ← QUADRATO per farlo rotondo */
+    width: 150px;          /* ← PIÙ GROSSO */
+    height: 150px;         /* ← QUADRATO per farlo rotondo */
     border-radius: 50%;    /* ← PERFETTAMENTE ROTONDO */
     border: 5px solid #FFD700; /* ← BORDO PIÙ SPESSO */
     box-shadow: 
@@ -171,11 +173,13 @@
         }
         
         .tabs {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            background: rgba(139,0,0,0.4);
-            border-bottom: 3px solid #8B0000;
-        }
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    /* 🔥 TABS TRASPARENTI */
+    background: rgba(139,0,0,0.3);
+    border-bottom: 3px solid #8B0000;
+    backdrop-filter: blur(3px);
+}
         
         .tab {
             padding: 18px 10px;
@@ -224,13 +228,16 @@
         }
         
         .section {
-            background: rgba(139,0,0,0.15);
-            border-radius: 20px;
-            padding: 25px 20px;
-            margin: 15px 0;
-            border: 2px solid #8B0000;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-        }
+    /* 🔥 SEZIONI MOLTO TRASPARENTI */
+    background: rgba(139,0,0,0.2);
+    border-radius: 20px;
+    padding: 25px 20px;
+    margin: 15px 0;
+    border: 2px solid #8B0000;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    /* 🌟 EFFETTO VETRO LEGGERO */
+    backdrop-filter: blur(2px);
+}
         
         .section h2 {
             color: #FFD700;
@@ -1238,6 +1245,25 @@
     .detail-row {
         font-size: 0.85em;
     }
+}
+        /* 🔥 MIGLIORA LEGGIBILITÀ SU SFONDO PULITO */
+h1, h2, h3, label, .info-title {
+    text-shadow: 
+        2px 2px 4px rgba(0,0,0,0.9),
+        0 0 10px rgba(0,0,0,0.8),
+        0 0 20px rgba(0,0,0,0.6) !important;
+}
+
+p, span, div {
+    text-shadow: 
+        1px 1px 3px rgba(0,0,0,0.8),
+        0 0 8px rgba(0,0,0,0.6);
+}
+
+/* 🌟 INPUT LEGGIBILI */
+.form-group input, .form-group select, .form-group textarea {
+    background: rgba(0,0,0,0.8) !important;
+    border: 3px solid rgba(139,0,0,0.8) !important;
 }
     </style>
 </head>
