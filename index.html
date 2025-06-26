@@ -1286,22 +1286,48 @@
                     <h2>📦 INVENTARIO MAGAZZINO</h2>
 
 <!-- HEADER STATISTICHE -->
+<!-- 📊 STATISTICHE INVENTARIO COMPLETE -->
 <div class="inventory-stats">
-    <div class="stat-box">
+    <!-- RIGA 1: CONTEGGI ARTICOLI -->
+    <div class="stat-box" style="border: 2px solid #FFD700;">
         <span class="stat-number" id="totalItems">--</span>
-        <div class="stat-label">Articoli Totali</div>
+        <div class="stat-label">📦 Articoli Totali</div>
     </div>
-    <div class="stat-box">
-        <span class="stat-number" id="availableItems">--</span>
-        <div class="stat-label">Disponibili</div>
+    <div class="stat-box" style="border: 2px solid #32CD32;">
+        <span class="stat-number" id="sellableItems">--</span>
+        <div class="stat-label">🎴 Da Vendere</div>
     </div>
-    <div class="stat-box">
+    <div class="stat-box" style="border: 2px solid #4169E1;">
+        <span class="stat-number" id="internalItems">--</span>
+        <div class="stat-label">🔧 Uso Interno</div>
+    </div>
+    
+    <!-- RIGA 2: VALORI MAGAZZINO -->
+    <div class="stat-box" style="border: 2px solid #32CD32;">
+        <span class="stat-number" id="sellableValue">€--</span>
+        <div class="stat-label">💎 Valore Da Vendere</div>
+    </div>
+    <div class="stat-box" style="border: 2px solid #4169E1;">
+        <span class="stat-number" id="internalValue">€--</span>
+        <div class="stat-label">🛡️ Valore Uso Interno</div>
+    </div>
+    <div class="stat-box" style="border: 2px solid #FFD700;">
         <span class="stat-number" id="totalValue">€--</span>
-        <div class="stat-label">Valore Magazzino</div>
+        <div class="stat-label">💰 Valore Totale</div>
     </div>
-    <div class="stat-box">
+    
+    <!-- RIGA 3: PEZZI E VENDUTO -->
+    <div class="stat-box" style="border: 2px solid #FFD700;">
+        <span class="stat-number" id="availableItems">--</span>
+        <div class="stat-label">✅ Pezzi Disponibili</div>
+    </div>
+    <div class="stat-box" style="border: 2px solid #FF6347;">
+        <span class="stat-number" id="soldItems">--</span>
+        <div class="stat-label">📈 Pezzi Venduti</div>
+    </div>
+    <div class="stat-box" style="border: 2px solid #FF6347;">
         <span class="stat-number" id="soldValue">€--</span>
-        <div class="stat-label">Venduto</div>
+        <div class="stat-label">💸 Valore Venduto</div>
     </div>
 </div>
                     <!-- GESTIONE CATEGORIE -->
@@ -3626,27 +3652,73 @@ function closeUnificationDialog() {
 }
  // AGGIORNA STATISTICHE INVENTARIO
 function updateInventoryStats(data) {
-    const totalItems = (data.daVendere?.length || 0) + (data.usoInterno?.length || 0);
-    const availableItems = data.daVendere?.filter(item => item.quantita_disponibile > 0).length || 0;
+    console.log('📊 Aggiornando statistiche complete...', data);
     
-    let totalValue = 0;
-    let soldValue = 0;
+    // 🎯 CONTATORI SEPARATI
+    let totalItems = 0;
+    let sellableItems = 0;   // Articoli da vendere
+    let internalItems = 0;   // Articoli uso interno
+    let availableItems = 0;  // Pezzi fisicamente disponibili
+    let soldItems = 0;       // Pezzi venduti
     
-    // Calcola valori
-    [...(data.daVendere || []), ...(data.usoInterno || [])].forEach(item => {
-        const itemValue = item.quantita_disponibile * parseFloat(item.prezzo_unitario);
-        totalValue += itemValue;
-        
-        const soldQty = item.quantita_totale - item.quantita_disponibile;
-        soldValue += soldQty * parseFloat(item.prezzo_unitario);
+    let sellableValue = 0;   // Valore magazzino da vendere
+    let internalValue = 0;   // Valore magazzino uso interno
+    let soldValue = 0;       // Valore del venduto (prezzo acquisto)
+    
+    // 📊 CALCOLA DA VENDERE
+    if (data.daVendere && Array.isArray(data.daVendere)) {
+        data.daVendere.forEach(item => {
+            const quantitaTotale = parseInt(item.quantita_totale) || 0;
+            const quantitaDisponibile = parseInt(item.quantita_disponibile) || 0;
+            const quantitaVenduta = quantitaTotale - quantitaDisponibile;
+            const prezzoUnitario = parseFloat(item.prezzo_unitario) || 0;
+            
+            totalItems++;
+            sellableItems++;
+            availableItems += quantitaDisponibile;
+            soldItems += quantitaVenduta;
+            
+            sellableValue += quantitaDisponibile * prezzoUnitario;
+            soldValue += quantitaVenduta * prezzoUnitario;
+        });
+    }
+    
+    // 🔧 CALCOLA USO INTERNO
+    if (data.usoInterno && Array.isArray(data.usoInterno)) {
+        data.usoInterno.forEach(item => {
+            const quantitaTotale = parseInt(item.quantita_totale) || 0;
+            const prezzoUnitario = parseFloat(item.prezzo_unitario) || 0;
+            
+            totalItems++;
+            internalItems++;
+            availableItems += quantitaTotale; // Uso interno è sempre "disponibile"
+            
+            internalValue += quantitaTotale * prezzoUnitario;
+        });
+    }
+    
+    // 💰 CALCOLO VALORE TOTALE
+    const totalValue = sellableValue + internalValue + soldValue;
+    
+    // 🎨 AGGIORNA UI
+    document.getElementById('totalItems').textContent = totalItems;
+    document.getElementById('sellableItems').textContent = sellableItems;
+    document.getElementById('internalItems').textContent = internalItems;
+    document.getElementById('sellableValue').textContent = `€${sellableValue.toFixed(2)}`;
+    document.getElementById('internalValue').textContent = `€${internalValue.toFixed(2)}`;
+    document.getElementById('totalValue').textContent = `€${totalValue.toFixed(2)}`;
+    document.getElementById('availableItems').textContent = availableItems;
+    document.getElementById('soldItems').textContent = soldItems;
+    document.getElementById('soldValue').textContent = `€${soldValue.toFixed(2)}`;
+    
+    console.log('✅ Statistiche aggiornate:', {
+        totalItems, sellableItems, internalItems, availableItems, soldItems,
+        sellableValue: sellableValue.toFixed(2),
+        internalValue: internalValue.toFixed(2), 
+        totalValue: totalValue.toFixed(2),
+        soldValue: soldValue.toFixed(2)
     });
-    
-    // Aggiorna UI
-document.getElementById('totalItems').textContent = totalItems;
-document.getElementById('availableItems').textContent = availableItems;
-document.getElementById('totalValue').textContent = `€${totalValue.toFixed(2)}`;  // ← 2 decimali
-document.getElementById('soldValue').textContent = `€${soldValue.toFixed(2)}`;    // ← 2 decimali
-}   
+}  
 // 🔧 FUNZIONE CORRETTA PER AGGIORNARE CONTATORI CATEGORIE
 function updateCategoryCounters() {
     // Resetta tutti i contatori
