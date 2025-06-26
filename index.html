@@ -8,6 +8,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#8B0000">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
         * {
             margin: 0;
             padding: 0;
@@ -68,17 +69,18 @@
 }
 
 .custom-logo {
-    width: 120px;
-    height: 90px;
-    border-radius: 15px;
-    border: 3px solid #FFD700;
+    width: 160px;          /* ← PIÙ GROSSO */
+    height: 120px;         /* ← PIÙ GROSSO */
+    border-radius: 25px;   /* ← PIÙ ARROTONDATO */
+    border: 4px solid #FFD700;
     box-shadow: 
-        0 0 25px rgba(255,215,0,0.6),
-        0 0 50px rgba(255,0,0,0.3);
+        0 0 30px rgba(255,215,0,0.8),
+        0 0 60px rgba(255,0,0,0.4);
     animation: legendaryGlow 3s ease-in-out infinite alternate;
-    object-fit: contain;
-    background: rgba(0,0,0,0.3);
-    padding: 5px;
+    object-fit: cover;     /* ← RIMUOVE SFONDO BIANCO */
+    background: transparent; /* ← NIENTE SFONDO */
+    padding: 8px;
+    filter: contrast(1.1) saturate(1.2); /* ← COLORI PIÙ VIVACI */
 }
 
 @keyframes legendaryGlow {
@@ -97,14 +99,22 @@
 }
 
 .header h1 {
-    font-size: 2.4em;
-    text-shadow: 4px 4px 8px rgba(0,0,0,0.9);
+    font-family: 'Orbitron', 'Arial Black', Arial, sans-serif;
+    font-size: 2.8em;
+    font-weight: 900;
+    text-shadow: 
+        0 0 10px #FFD700,
+        0 0 20px #FFD700,
+        0 0 30px #FF0000,
+        4px 4px 8px rgba(0,0,0,0.9);
     position: relative;
     z-index: 2;
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 15px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
 }
 
 .number-3 {
@@ -115,18 +125,32 @@
         0 0 30px #FFD700,
         3px 3px 6px rgba(0,0,0,0.8);
     font-weight: 900;
+    filter: drop-shadow(0 0 10px #FFD700);
+    animation: numberPulse 2s ease-in-out infinite alternate;
 }
 
+
 .legend-text {
-    background: linear-gradient(45deg, #FF0000, #FFD700, #FF0000, #8B0000);
-    background-size: 300% 300%;
+    background: linear-gradient(45deg, #FF0000, #FFD700, #FF6600, #FF0000, #8B0000);
+    background-size: 400% 400%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     font-weight: 900;
     text-shadow: none;
-    filter: drop-shadow(3px 3px 6px rgba(0,0,0,0.8));
-    animation: textShine 4s ease-in-out infinite;
+    filter: drop-shadow(4px 4px 8px rgba(0,0,0,0.8));
+    animation: textShine 3s ease-in-out infinite, textScale 4s ease-in-out infinite alternate;
+}
+
+/* ANIMAZIONI FIGISSIME */
+@keyframes numberPulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.1); }
+}
+
+@keyframes textScale {
+    from { transform: scaleY(1); }
+    to { transform: scaleY(1.05); }
 }
 
 @keyframes textShine {
@@ -1223,7 +1247,7 @@
         <span class="legend-text">LEGENDARY</span>
     </h1>
 </div>
-            <div class="subtitle">Sistema Mobile Pokémon</div>
+            
         </div>
         
         <div class="tabs">
